@@ -1,11 +1,15 @@
 cff-version: 1.2.0
 title: vLLM Model Switch Controller
 message: >-
-  If you use vLLM Switch in research, cite the project release and the
-  accompanying publication when one is available.
+  This file describes the latest published release, v0.1.5. If you use a
+  development checkout, cite its exact commit instead; cite the accompanying
+  publication when one is available.
 type: software
+authors:
+  - name: vLLM Switch contributors
 version: 0.1.5
-date-released: 2026-08-04
+date-released: 2026-08-05
+commit: 8b64ad232c8eba5d0da265abd93bd7b061db0549
 license: Apache-2.0
 repository-code: https://github.com/leinfinitr/vllm-switch
 url: https://github.com/leinfinitr/vllm-switch

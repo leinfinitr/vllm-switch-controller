@@ -622,7 +622,7 @@ wheels = [
 
 [[package]]
 name = "vllm-switch-controller"
-version = "0.1.5"
+version = "0.2.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
@@ -636,6 +636,7 @@ dependencies = [
 dev = [
     { name = "build" },
     { name = "mypy" },
+    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
@@ -655,6 +656,7 @@ requires-dist = [
 dev = [
     { name = "build", specifier = ">=1.2.2,<2" },
     { name = "mypy", specifier = ">=1.14,<2" },
+    { name = "packaging", specifier = ">=24,<27" },
     { name = "pytest", specifier = ">=8.2.0,<10" },
     { name = "pytest-asyncio", specifier = ">=0.23.0,<2" },
     { name = "ruff", specifier = ">=0.6.0,<1" },

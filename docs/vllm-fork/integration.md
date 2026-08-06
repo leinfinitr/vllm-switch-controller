@@ -41,10 +41,10 @@ The v0.1 controller requires protocol version `1` on registration and usage. Wor
 send a stable capability set and a complete non-reusable process-incarnation `client_id`.
 Exact-disk aggregate fields require `exact-disk-accounting-v1`.
 
-The development vLLM client at older commits did not send explicit version/capability
-fields. Pair this controller RC only with the vLLM release candidate that implements the
-same contract. A `422` registration/usage response is an integration mismatch, not a
-reason to weaken validation.
+Older vLLM Switch development commits did not send explicit version/capability fields.
+Pair this controller only with an engine revision that implements the same contract. A
+`422` registration/usage response is an integration mismatch, not a reason to weaken
+validation.
 
 ## Canonical environment variables
 

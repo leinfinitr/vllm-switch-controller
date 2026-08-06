@@ -1,6 +1,7 @@
 # Documentation
 
-Current v0.1 documentation for the vLLM Model Switch Controller.
+Current documentation for the `0.2.0.dev0` development version of the vLLM Model Switch
+Controller. The latest published release is `v0.1.5`.
 
 ## Start here
 

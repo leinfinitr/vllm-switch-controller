@@ -6,6 +6,10 @@
 An experimental external control plane that routes OpenAI-compatible requests across
 long-lived, single-model vLLM backends and serializes their sleep/wake lifecycle.
 
+The default branch currently identifies as the PEP 440 development version
+`0.2.0.dev0`. The latest published controller release is `v0.1.5`; use exact commits when
+combining development checkouts across repositories.
+
 > [!WARNING]
 > The controller has no authentication, authorization, or TLS. Its data and management
 > APIs share one listener. Keep it on loopback or a trusted management network and place
@@ -63,7 +67,7 @@ Or install a built wheel:
 
 ```bash
 uv build
-uv tool install dist/vllm_switch_controller-0.1.5-py3-none-any.whl
+uv tool install dist/vllm_switch_controller-0.2.0.dev0-py3-none-any.whl
 vllm-switch-controller --version
 ```
 
@@ -129,10 +133,11 @@ unrelated process.
 
 ## Scope and status
 
-v0.1 is a research release candidate, not a production gateway. It intentionally omits
-replica scheduling, multi-controller coordination, durable state, built-in authentication,
-and automatic recovery from backend process loss. The current supported topology is one
-controller process managing trusted, explicitly configured single-model backends.
+`0.2.0.dev0` is under development after the `v0.1.5` research release. Neither line is a
+production gateway. The controller intentionally omits replica scheduling,
+multi-controller coordination, durable state, built-in authentication, and automatic
+recovery from backend process loss. The supported topology is one controller process
+managing trusted, explicitly configured single-model backends.
 
 Benchmark code and historical experiment archives are intentionally absent from this
 repository. Use [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) for reproducible performance evaluation.

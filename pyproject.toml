@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vllm-switch-controller"
-version = "0.1.5"
+version = "0.2.0.dev0"
 description = "External model-switching control plane for vLLM Switch"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -49,6 +49,7 @@ vllm-switch-stop = "scripts.stop_vllm_pool:main"
 dev = [
     "build>=1.2.2,<2",
     "mypy>=1.14,<2",
+    "packaging>=24,<27",
     "pytest>=8.2.0,<10",
     "pytest-asyncio>=0.23.0,<2",
     "ruff>=0.6.0,<1",

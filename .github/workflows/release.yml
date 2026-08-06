@@ -18,6 +18,7 @@ jobs:
           version: "0.9.18"
           python-version: "3.11"
       - run: uv sync --frozen --dev
+      - run: uv run python -m pytest tests/test_version.py -q
       - run: uv run python -m pytest tests -q
       - run: uv run ruff check controller scripts tests
       - run: uv run ruff format --check controller scripts tests
@@ -29,6 +30,6 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-  # Publishing is intentionally not automatic in v0.1. Maintainers inspect the
+  # Publishing is intentionally not automatic. Maintainers inspect the
   # artifacts, pin companion repository commits in release notes, and publish
   # through the repository host's trusted release process.

@@ -24,6 +24,24 @@ jobs:
       - run: uv run ruff check controller scripts tests
       - run: uv run ruff format --check controller scripts tests
       - run: uv run mypy --ignore-missing-imports controller
+      - name: Require the tag to match the package version
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          uv run python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          project_version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          expected_tag = f"v{project_version}"
+          actual_tag = os.environ["RELEASE_TAG"]
+          if actual_tag != expected_tag:
+              raise SystemExit(
+                  f"release tag {actual_tag!r} does not match package version {project_version!r}"
+              )
+          PY
       - run: uv build
       - uses: actions/upload-artifact@v4
         with:

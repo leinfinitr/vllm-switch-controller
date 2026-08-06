@@ -28,6 +28,14 @@ def workflow_text(name: str) -> str:
     return (REPOSITORY_ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
 
 
+def test_release_workflow_rejects_tag_version_mismatches():
+    workflow = workflow_text("release.yml")
+
+    assert "RELEASE_TAG: ${{ github.ref_name }}" in workflow
+    assert 'expected_tag = f"v{project_version}"' in workflow
+    assert "actual_tag != expected_tag" in workflow
+
+
 def test_development_version_is_pep440_and_consistent():
     versions = {
         project_metadata()["version"],

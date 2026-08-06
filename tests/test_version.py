@@ -30,19 +30,31 @@ def workflow_text(name: str) -> str:
     return (REPOSITORY_ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
 
 
-def test_release_workflow_rejects_tag_version_mismatches():
-    workflow = workflow_text("release.yml")
+def release_steps() -> list[dict]:
+    workflow = safe_load(workflow_text("release.yml"))
+    return workflow["jobs"]["build"]["steps"]
 
-    assert "RELEASE_TAG: ${{ github.ref_name }}" in workflow
-    assert "uv run python -m scripts.check_release_tag" in workflow
+
+def test_release_workflow_rejects_tag_version_mismatches():
+    gate = next(
+        step
+        for step in release_steps()
+        if step.get("name") == "Require the tag to match the package version"
+    )
+    assert gate["if"] == "github.event_name == 'push'"
+    assert gate["env"] == {"RELEASE_TAG": "${{ github.ref_name }}"}
+    assert gate["run"] == "uv run python -m scripts.check_release_tag"
 
 
 def test_release_tag_gate_accepts_only_the_project_version():
-    workflow = workflow_text("release.yml")
-    assert "if: github.event_name == 'push'" in workflow
-    assert workflow.index("Require the tag to match the package version") < workflow.index(
-        "- run: uv build"
+    steps = release_steps()
+    gate_index = next(
+        index
+        for index, step in enumerate(steps)
+        if step.get("name") == "Require the tag to match the package version"
     )
+    build_index = next(index for index, step in enumerate(steps) if step.get("run") == "uv build")
+    assert gate_index < build_index
 
     validate_release_tag(f"v{EXPECTED_DEVELOPMENT_VERSION}")
     with pytest.raises(ValueError, match="does not match package version"):

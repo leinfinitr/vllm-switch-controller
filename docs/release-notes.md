@@ -1,6 +1,7 @@
 # v0.1.5 Release Notes
 
-v0.1.5 is the first public research-preview release of the vLLM Switch controller.
+v0.1.5 is the latest patch in the first public research-preview release line of the vLLM
+Switch controller.
 
 ## Highlights
 

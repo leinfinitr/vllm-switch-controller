@@ -150,8 +150,8 @@ launch or locate backend
 Inference must not begin until this preparation completes. The sequential sequence lets
 models initialize even when their awake footprints cannot coexist.
 
-`wake_tags: null` emits no query parameter and use vLLM default. A configured
-list is forwarded as `tags` parameters by both the normal request path and the
+`wake_tags: null` emits no query parameter and uses the vLLM default. A configured
+list is forwarded as repeated `tags` parameters by both the normal request path and the
 startup launcher. This keeps startup and request-driven semantics identical.
 
 Launcher-managed processes run in independent sessions. The ownership file records PID,

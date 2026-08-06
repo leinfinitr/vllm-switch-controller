@@ -35,8 +35,8 @@ vLLM Switch is useful for:
 
 - Running multiple models on a single GPU with minimal HBM usage.
 - Managing sleep/wake cycles across multiple vLLM processes.
-- Use idle CPU memory for backup storage and reclaiming it when needed.
-- Use direct I/O for exact disk snapshots and fast recovery.
+- Using idle CPU memory for backup storage and reclaiming it when needed.
+- Using direct I/O for exact disk snapshots and recovery.
 
 The companion [vLLM Switch fork](https://github.com/leinfinitr/vllm) owns pinned CPU
 backups, eager prebackup, D2H/H2D, validity, concrete reclaim, and exact disk snapshots.
@@ -47,7 +47,7 @@ cross-system experiments, results, plots, and phase artifacts.
 
 - Linux and Python 3.11 or newer.
 - [`uv`](https://docs.astral.sh/uv/) for the source workflow.
-- The compatible vLLM Switch fork for the full backup feature set. Stock vLLM can supply 
+- The compatible vLLM Switch fork for the full backup feature set. Stock vLLM can supply
   basic sleep endpoints but not this coordinator contract.
 - Enough GPU memory to initialize each configured model individually.
 
@@ -130,7 +130,7 @@ unrelated process.
 - [CPU backup coordinator protocol](docs/cpu_backup_coordinator.md)
 - [vLLM fork delta and integration](docs/vllm-fork/README.md)
 - [Compatibility matrix](docs/compatibility.md)
-- [v0.1 release notes](docs/release-notes.md)
+- [v0.1.5 release notes](docs/release-notes.md)
 
 ## Scope and status
 
@@ -141,7 +141,8 @@ recovery from backend process loss. The supported topology is one controller pro
 managing trusted, explicitly configured single-model backends.
 
 Benchmark code and historical experiment archives are intentionally absent from this
-repository. Use [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) for reproducible performance evaluation.
+repository. Use [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) for
+reproducible performance evaluation.
 
 ## Development
 

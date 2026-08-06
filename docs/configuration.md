@@ -13,7 +13,7 @@ Each key under `models` is a public alias accepted by the OpenAI-compatible endp
 | `backend_url` | yes | - | HTTP(S) base URL of one single-model vLLM server. |
 | `served_model_name` | yes | - | Non-empty model name written into forwarded bodies. |
 | `sleep_level` | no | `1` | vLLM sleep level, `1` or `2`. |
-| `wake_tags` | no | `null` | `null` use vLLM default; otherwise a non-empty unique string list. |
+| `wake_tags` | no | `null` | `null` uses the vLLM default; otherwise a non-empty unique string list. |
 | `launch_command` | no | `null` | Non-empty argument vector used by `vllm-switch-launch`. |
 | `env` | no | `{}` | String environment overrides for a launcher-managed process. |
 | `cwd` | no | `null` | Working directory for a launcher-managed process. |
@@ -51,8 +51,9 @@ At least one model is required.
 
 - `always_sleep_previous`: keep one active model; drain and sleep it before waking a new
   target.
-- `always_awake_previous`: keep already-awake models resident and switch to new
-  target after its pending requests finish.
+- `always_awake_previous`: keep already-awake models resident and wait for the target's
+  pending requests before switching the active route. Use only when GPU capacity permits
+  all awake footprints.
 
 ## Host-memory pressure settings
 

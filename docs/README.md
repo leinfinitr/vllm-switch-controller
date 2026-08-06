@@ -28,5 +28,5 @@ Controller. The latest published release is `v0.1.5`.
 - [v0.1.5 release notes](release-notes.md)
 
 Development plans, historical experiments, benchmark scripts, and performance results are
-not part of this release repository. Git history preserves prior development, while
+not part of this controller repository. Git history preserves prior development, while
 `llm-switch-bench` owns current reproducible evaluation artifacts.

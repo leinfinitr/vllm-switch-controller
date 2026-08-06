@@ -51,10 +51,14 @@ def test_citation_identifies_latest_release_instead_of_unreleased_checkout():
     assert "development checkout" in citation["message"]
 
 
-def test_packaging_workflows_run_version_consistency_gate_before_build():
-    gate = "uv run python -m pytest tests/test_version.py -q"
+def test_packaging_workflows_run_metadata_consistency_gates_before_build():
+    gates = (
+        "uv run python -m pytest tests/test_version.py -q",
+        "uv run python -m pytest tests/test_compatibility_manifest.py -q",
+    )
 
     for workflow_name in ("ci.yml", "release.yml"):
         workflow = workflow_text(workflow_name)
-        assert gate in workflow
-        assert workflow.index(gate) < workflow.index("uv build")
+        for gate in gates:
+            assert gate in workflow
+            assert workflow.index(gate) < workflow.index("uv build")

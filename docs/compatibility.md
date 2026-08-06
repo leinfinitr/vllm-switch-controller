@@ -1,29 +1,29 @@
-# Compatibility Matrix
+# Compatibility Contract
 
-v0.1 is a coordinated research release. Do not assume compatibility from repository names
-or nearby dates; pin exact revisions in deployments and experiment metadata.
+Compatibility is defined by wire protocols and explicitly published component
+combinations, not by repository names or nearby commit dates. Pin every component in a
+released deployment. For automation, use the published
+[`compatibility/v0.1.yaml`](../compatibility/v0.1.yaml) manifest.
 
-## Release contract
+The controller's current package identity is `0.2.0.dev0`. Development checkouts are not a
+published suite combination: record their exact commits and revalidate the contracts below.
 
-| Component | v0.1 contract |
-|---|---|
-| Controller package | `vllm-switch-controller==0.1.5` |
-| Controller lifecycle-fix commit | `87c30a4d626670f8c2af780699fd5fb7182d2ddf` |
-| Controller release tag | `v0.1.5` |
-| vLLM upstream base | tag `v0.22.1`, commit `0decac0d96c42b49572498019f0a0e3600f50398` |
-| vLLM Switch fork release tag | `aipc2-v0.1.0` |
-| vLLM Switch fork release commit | `71071ce4d0bc65e38acf2da76eb8c6fb05b9454d` |
-| vLLM evidence collection commit | `1b3919d8c210af05f6ea8b29fff33fb8d07e6c1d` |
-| CPU backup protocol | version `1` |
-| Exact disk manifest | schema version `1` in the compatible fork |
-| Benchmark artifact-closure commit | `llm-switch-bench` at `36e08b7e6393e7c9ab9747ca7b3c95562353c998` |
-| Benchmark release commit | `llm-switch-bench` at `e4e388acc33977bee7ca19d72a2959fc736d76ab` |
-| Benchmark release tag | `v0.1.8` |
+## Published suite combinations
 
-Hosted releases use the immutable commits above. The three repositories are tagged
-independently because the vLLM fork shares upstream's existing tag namespace.
+| Suite | Controller | Engine | Benchmark artifact | Protocols |
+|---|---|---|---|---|
+| v0.1 | `v0.1.5` (`8b64ad232c8eba5d0da265abd93bd7b061db0549`) | `aipc2-v0.1.0` (`71071ce4d0bc65e38acf2da76eb8c6fb05b9454d`) | `v0.1.8` (`e4e388acc33977bee7ca19d72a2959fc736d76ab`) | CPU backup v1; exact disk manifest v1 |
 
-## Protocol capabilities
+The engine in this combination is based on upstream vLLM `v0.22.1` at
+`0decac0d96c42b49572498019f0a0e3600f50398`. Tags are independent across repositories;
+the engine keeps upstream's tag namespace, so its historical suite tag has an `aipc2-`
+prefix.
+
+The benchmark component is listed to identify the published reproducibility bundle. It is
+not a runtime dependency of the controller or engine. Data-collection and artifact-closure
+commits belong in benchmark provenance, not in this long-term compatibility contract.
+
+## CPU backup protocol v1
 
 Protocol v1 defines these controller/worker capabilities:
 
@@ -34,14 +34,15 @@ process-incarnation-v1
 exact-disk-accounting-v1
 ```
 
-Registration and usage requests declare the capabilities they use. Unknown capabilities,
-an unsupported `protocol_version`, or missing required metadata fail validation. A client
-cannot change PID, protocol version, or capability set while retaining the same complete
-process-incarnation ID.
+The first three capabilities are required. `exact-disk-accounting-v1` is optional unless a
+worker reports exact-disk aggregate fields. Registration and usage requests declare a
+stable capability set. Unknown capabilities, an unsupported `protocol_version`, or missing
+required metadata fail validation. A client cannot change PID, protocol version, or
+capabilities while retaining the same complete process-incarnation ID.
 
-The compatible vLLM commit above implements this explicit handshake. Older local forks
-without these fields receive no valid coordinator usage; basic OpenAI routing and
-sleep/wake can still work independently.
+Older engine commits without the explicit handshake receive no valid coordinator usage;
+basic OpenAI routing and sleep/wake can still work independently when their management API
+satisfies the contract below.
 
 ## vLLM management API contract
 
@@ -72,12 +73,12 @@ The controller never invents or injects a disk location.
 ## Supported Python versions
 
 The controller CI covers Python 3.11 and 3.12. vLLM, CUDA, PyTorch, GPU architecture, and
-model compatibility are governed by the pinned vLLM fork rather than the lightweight
+model compatibility are governed by the pinned engine rather than the lightweight
 controller package.
 
 ## Non-guarantees
 
-v0.1 does not claim compatibility with:
+The published v0.1 suite does not claim compatibility with:
 
 - arbitrary upstream vLLM releases after `v0.22.1`;
 - stock vLLM coordinator clients (stock vLLM has no such client);

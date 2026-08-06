@@ -51,7 +51,8 @@ cross-system experiments, results, plots, and phase artifacts.
   basic sleep endpoints but not this coordinator contract.
 - Enough GPU memory to initialize each configured model individually.
 
-See the exact [compatibility contract](docs/compatibility.md) and
+See the exact [compatibility contract](docs/compatibility.md), machine-readable
+[`v0.1` suite manifest](compatibility/v0.1.yaml), and
 [vLLM fork delta](docs/vllm-fork/README.md) before combining revisions.
 
 ## Install

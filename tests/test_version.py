@@ -1,14 +1,13 @@
-import os
-import subprocess
-import sys
 import tomllib
 from importlib.metadata import version as distribution_version
 from pathlib import Path
 
+import pytest
 from packaging.version import Version
 from yaml import safe_load
 
 import controller
+from scripts.check_release_tag import validate_release_tag
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DISTRIBUTION_NAME = "vllm-switch-controller"
@@ -35,48 +34,19 @@ def test_release_workflow_rejects_tag_version_mismatches():
     workflow = workflow_text("release.yml")
 
     assert "RELEASE_TAG: ${{ github.ref_name }}" in workflow
-    assert 'expected_tag = f"v{project_version}"' in workflow
-    assert "actual_tag != expected_tag" in workflow
+    assert "uv run python -m scripts.check_release_tag" in workflow
 
 
-def test_release_tag_gate_accepts_only_the_project_version(tmp_path: Path):
+def test_release_tag_gate_accepts_only_the_project_version():
     workflow = workflow_text("release.yml")
     assert "if: github.event_name == 'push'" in workflow
     assert workflow.index("Require the tag to match the package version") < workflow.index(
         "- run: uv build"
     )
 
-    gate = tmp_path / "release_tag_gate.py"
-    gate.write_text(
-        """import os
-import tomllib
-from pathlib import Path
-
-project_version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
-expected_tag = f'v{project_version}'
-actual_tag = os.environ['RELEASE_TAG']
-if actual_tag != expected_tag:
-    raise SystemExit(
-        f'release tag {actual_tag!r} does not match package version {project_version!r}'
-    )
-""",
-        encoding="utf-8",
-    )
-
-    def run(tag: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            [sys.executable, str(gate)],
-            cwd=REPOSITORY_ROOT,
-            env={**os.environ, "RELEASE_TAG": tag},
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-    assert run(f"v{EXPECTED_DEVELOPMENT_VERSION}").returncode == 0
-    mismatch = run("v0.2.0")
-    assert mismatch.returncode != 0
-    assert "does not match package version" in mismatch.stderr
+    validate_release_tag(f"v{EXPECTED_DEVELOPMENT_VERSION}")
+    with pytest.raises(ValueError, match="does not match package version"):
+        validate_release_tag("v0.2.0")
 
 
 def test_development_version_is_pep440_and_consistent():

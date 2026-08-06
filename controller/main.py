@@ -82,7 +82,7 @@ def create_app(config: ControllerConfig) -> FastAPI:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the vLLM model switch controller")
     parser.add_argument("--version", action="version", version=__version__)
-    parser.add_argument("--config", default="configs/models.example.yaml")
+    parser.add_argument("--config", default="configs/models.launcher.example.yaml")
     args = parser.parse_args()
     config = load_config(args.config)
     app = create_app(config)

@@ -72,7 +72,7 @@ vllm-switch-controller --version
 Create a local configuration. Machine paths belong only in ignored `*.local.yaml` files:
 
 ```bash
-cp configs/models.example.yaml configs/models.local.yaml
+cp configs/models.launcher.example.yaml configs/models.local.yaml
 $EDITOR configs/models.local.yaml
 ```
 

@@ -168,7 +168,7 @@ async def prepare_pool(config, *, pid_file: str | Path, skip_launch: bool) -> No
 
 async def main_async() -> None:
     parser = argparse.ArgumentParser(description="Launch configured vLLM pool sequentially")
-    parser.add_argument("--config", default="configs/models.example.yaml")
+    parser.add_argument("--config", default="configs/models.launcher.example.yaml")
     parser.add_argument("--pid-file", default="pids.json")
     parser.add_argument(
         "--skip-launch",

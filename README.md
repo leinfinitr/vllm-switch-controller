@@ -6,10 +6,6 @@
 An experimental external control plane that routes OpenAI-compatible requests across
 long-lived, single-model vLLM backends and serializes their sleep/wake lifecycle.
 
-The default branch currently identifies as the PEP 440 development version
-`0.2.0.dev0`. The latest published controller release is `v0.1.5`; use exact commits when
-combining development checkouts across repositories.
-
 > [!WARNING]
 > The controller has no authentication, authorization, or TLS. Its data and management
 > APIs share one listener. Keep it on loopback or a trusted management network and place
@@ -41,7 +37,7 @@ vLLM Switch is useful for:
 The companion [vLLM Switch fork](https://github.com/leinfinitr/vllm) owns pinned CPU
 backups, eager prebackup, D2H/H2D, validity, concrete reclaim, and exact disk snapshots.
 The [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) repository owns
-cross-system experiments, results, plots, and phase artifacts.
+cross-system experiments, results and plots.
 
 ## Requirements
 
@@ -51,8 +47,7 @@ cross-system experiments, results, plots, and phase artifacts.
   basic sleep endpoints but not this coordinator contract.
 - Enough GPU memory to initialize each configured model individually.
 
-See the exact [compatibility contract](docs/compatibility.md), machine-readable
-[`v0.1` suite manifest](compatibility/v0.1.yaml), and
+See the exact [compatibility contract](docs/compatibility.md) and
 [vLLM fork delta](docs/vllm-fork/README.md) before combining revisions.
 
 ## Install
@@ -68,7 +63,7 @@ Or install a built wheel:
 
 ```bash
 uv build
-uv tool install dist/vllm_switch_controller-0.2.0.dev0-py3-none-any.whl
+uv tool install dist/vllm_switch_controller-0.1.0-py3-none-any.whl
 vllm-switch-controller --version
 ```
 
@@ -130,19 +125,6 @@ unrelated process.
 - [CPU backup coordinator protocol](docs/cpu_backup_coordinator.md)
 - [vLLM fork delta and integration](docs/vllm-fork/README.md)
 - [Compatibility matrix](docs/compatibility.md)
-- [v0.1.5 release notes](docs/release-notes.md)
-
-## Scope and status
-
-`0.2.0.dev0` is under development after the `v0.1.5` research release. Neither line is a
-production gateway. The controller intentionally omits replica scheduling,
-multi-controller coordination, durable state, built-in authentication, and automatic
-recovery from backend process loss. The supported topology is one controller process
-managing trusted, explicitly configured single-model backends.
-
-Benchmark code and historical experiment archives are intentionally absent from this
-repository. Use [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) for
-reproducible performance evaluation.
 
 ## Development
 

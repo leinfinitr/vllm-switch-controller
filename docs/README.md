@@ -1,8 +1,5 @@
 # Documentation
 
-Current documentation for the `0.2.0.dev0` development version of the vLLM Model Switch
-Controller. The latest published release is `v0.1.5`.
-
 ## Start here
 
 - [Getting started](getting-started.md): install, configure, launch, request, and stop.
@@ -22,11 +19,3 @@ Controller. The latest published release is `v0.1.5`.
 - [Delta from upstream v0.22.1](vllm-fork/delta-v0.22.1.md)
 - [Controller–vLLM integration](vllm-fork/integration.md)
 - [Fork compatibility and testing](vllm-fork/compatibility.md)
-
-## Release
-
-- [v0.1.5 release notes](release-notes.md)
-
-Development plans, historical experiments, benchmark scripts, and performance results are
-not part of this controller repository. Git history preserves prior development, while
-`llm-switch-bench` owns current reproducible evaluation artifacts.

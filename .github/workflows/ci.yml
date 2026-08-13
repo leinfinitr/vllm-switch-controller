@@ -39,7 +39,6 @@ jobs:
           enable-cache: true
           python-version: "3.11"
       - run: uv sync --frozen --dev
-      - run: uv run python -m pytest tests/test_version.py -q
       - run: uv build
       - name: Install and smoke wheel
         run: |

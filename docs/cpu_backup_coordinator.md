@@ -21,7 +21,7 @@ restore the current GPU mapping.
 
 ## Aggregate Accounting Protocol
 
-v0.1 uses protocol version `1`. Registration and usage requests include
+The coordinator uses protocol version `1`. Registration and usage requests include
 `protocol_version` plus an explicit `capabilities` list. The controller rejects unknown
 versions/capabilities and extra fields with `422`; identity or monotonic-state conflicts
 return `409`.

@@ -128,7 +128,7 @@ release of `REQUIRED_FOR_RESTORE`, `COPYING_D2H`, or `RESTORING_H2D` storage. Se
 [CPU Backup Coordinator](cpu_backup_coordinator.md) for the wire contract and evidence
 required to claim physical host-memory reclamation.
 
-The v0.1 wire contract is explicitly versioned. Workers send `protocol_version: 1` and a
+The wire contract is explicitly versioned. Workers send `protocol_version: 1` and a
 capability set with registration and usage. The controller rejects unknown capabilities,
 process-incarnation identity changes, and capability drift instead of silently accepting
 a schema it may misinterpret.

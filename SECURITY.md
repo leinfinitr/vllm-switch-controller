@@ -6,8 +6,7 @@ The vLLM Model Switch Controller is an experimental research system. It has not 
 a production security audit and does not provide authentication, authorization, rate
 limiting, tenant isolation, or TLS termination.
 
-Security fixes are provided on a best-effort basis for the latest published release line
-and the default development branch.
+Security fixes are provided on a best-effort basis for the default branch.
 
 ## Reporting a Vulnerability
 

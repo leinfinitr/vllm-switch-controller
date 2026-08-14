@@ -43,12 +43,12 @@ cross-system experiments, results and plots.
 
 - Linux and Python 3.11 or newer.
 - [`uv`](https://docs.astral.sh/uv/) for the source workflow.
-- The compatible vLLM Switch fork for the full backup feature set. Stock vLLM can supply
+- The companion vLLM Switch fork for the full backup feature set. Stock vLLM can supply
   basic sleep endpoints but not this coordinator contract.
 - Enough GPU memory to initialize each configured model individually.
 
-See the exact [compatibility contract](docs/compatibility.md) and
-[vLLM fork delta](docs/vllm-fork/README.md) before combining revisions.
+See the [compatibility contract](docs/compatibility.md) and
+[vLLM fork integration](docs/vllm-fork/README.md).
 
 ## Install
 
@@ -63,8 +63,7 @@ Or install a built wheel:
 
 ```bash
 uv build
-uv tool install dist/vllm_switch_controller-0.1.0-py3-none-any.whl
-vllm-switch-controller --version
+uv tool install dist/*.whl
 ```
 
 ## Quick start
@@ -123,7 +122,7 @@ unrelated process.
 - [API reference](docs/api.md)
 - [Architecture and safety invariants](docs/architecture.md)
 - [CPU backup coordinator protocol](docs/cpu_backup_coordinator.md)
-- [vLLM fork delta and integration](docs/vllm-fork/README.md)
+- [vLLM fork integration](docs/vllm-fork/README.md)
 - [Compatibility matrix](docs/compatibility.md)
 
 ## Development

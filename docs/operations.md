@@ -125,7 +125,7 @@ the operator must include all allocations required by the subsequent operation.
 
 ### Coordinator requests return `422`
 
-The v0.1 wire contract requires `protocol_version: 1`, a declared capabilities list, and a
+The wire contract requires `protocol_version: 1`, a declared capabilities list, and a
 monotonic `released_bytes_total` on usage reports. Exact-disk fields require
 `exact-disk-accounting-v1`. This normally means the controller and vLLM fork revisions do
 not match; consult [Compatibility](compatibility.md).
@@ -137,7 +137,7 @@ monotonic counter. A restarted worker must use a new process-incarnation ID.
 
 ### CPU backup records outlive a crashed worker
 
-v0.1 has no lease or heartbeat. Stale records remain conservatively accounted. Confirm the
+The protocol has no lease or heartbeat. Stale records remain conservatively accounted. Confirm the
 worker is gone and restart the controller to clear in-memory coordinator state.
 
 ### Local control traffic reaches a proxy
@@ -145,7 +145,7 @@ worker is gone and restart the controller to clear in-memory coordinator state.
 Controller-to-backend and launcher traffic bypass environment proxies. Configure external
 clients with `NO_PROXY` for loopback/private endpoints if necessary.
 
-## Release checks
+## Development checks
 
 ```bash
 uv sync --frozen --dev

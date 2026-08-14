@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, main, "release/**"]
+    branches: [master, main]
   pull_request:
 
 permissions:
@@ -45,7 +45,6 @@ jobs:
           uv venv --python 3.11 /tmp/vllm-switch-wheel
           uv pip install --python /tmp/vllm-switch-wheel/bin/python dist/*.whl
           /tmp/vllm-switch-wheel/bin/vllm-switch-controller --help
-          /tmp/vllm-switch-wheel/bin/vllm-switch-controller --version
           /tmp/vllm-switch-wheel/bin/vllm-switch-launch --help
           /tmp/vllm-switch-wheel/bin/vllm-switch-smoke --help
           /tmp/vllm-switch-wheel/bin/vllm-switch-stop --help

@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager, suppress
 import uvicorn
 from fastapi import FastAPI
 
-from controller import __version__
 from controller.backup_pool import BackupPoolState
 from controller.config import ControllerConfig, load_config
 from controller.memory_pressure import MemoryPressureMonitor
@@ -57,7 +56,9 @@ def create_app(config: ControllerConfig) -> FastAPI:
 
     app = FastAPI(
         title="vLLM Model Switch Controller",
-        version=__version__,
+        # OpenAPI requires an info.version string; avoid presenting package metadata as a
+        # release declaration for the source checkout.
+        version="unversioned",
         lifespan=lifespan,
     )
     app.state.controller_config = config
@@ -81,7 +82,6 @@ def create_app(config: ControllerConfig) -> FastAPI:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the vLLM model switch controller")
-    parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("--config", default="configs/models.launcher.example.yaml")
     args = parser.parse_args()
     config = load_config(args.config)

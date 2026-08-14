@@ -8,12 +8,12 @@ CPU-backup accounting, host-memory pressure policy, and safe launcher-owned proc
 lifecycle. Tensor validity, D2H/H2D, exact disk bundles, and concrete backup reclamation
 remain inside vLLM.
 
-## Release conventions
+## Repository conventions
 
 - Keep only current public architecture, integration, and operating instructions under
   `docs/`.
 - Do not restore completed plans, historical reports, benchmark results, or performance
-  images to this release branch; Git history preserves old material.
+  images to the default branch; Git history preserves old material.
 - Keep reusable configuration under `configs/*.example.yaml` and machine values only in
   ignored `configs/*.local.yaml` files.
 - Keep live output in ignored `results/`, `tmp/`, or operator-selected paths.
@@ -26,7 +26,7 @@ remain inside vLLM.
 
 ## Verification
 
-The fast release gate is:
+The fast verification gate is:
 
 ```bash
 uv sync --frozen --dev
@@ -38,7 +38,10 @@ uv build
 ```
 
 Also install the built wheel in an isolated environment and smoke every console entry
-point before release.
+point.
+
+Package versions are maintained only in packaging metadata. Do not change version numbers
+or create tags or releases without explicit maintainer direction.
 
 ## Related repositories
 

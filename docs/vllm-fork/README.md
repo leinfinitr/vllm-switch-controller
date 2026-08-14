@@ -1,21 +1,17 @@
 # vLLM Switch Fork
 
-The engine used by vLLM Switch is a research fork of upstream vLLM `v0.22.1`
-(`0decac0d96c42b49572498019f0a0e3600f50398`). The fork keeps tensor correctness and data
-movement inside each vLLM process; this controller remains a metadata-only external control
-plane.
+The companion vLLM Switch repository keeps tensor correctness and data movement inside each
+vLLM process; this controller remains a metadata-only external control plane.
 
-At the audited fork revision, the approved feature delta touches 16 implementation,
-documentation, and focused-test files and adds five mechanisms:
+It adds five mechanisms:
 
 1. reusable pinned CPU clean backups;
 2. eager weight prebackup after engine warmup;
 3. lifecycle-wide validity and fail-closed mutation fencing;
 4. metadata-only HTTP coordination and dynamic host-memory reclaim;
-5. the supported v0.1 exact disk backup tier.
+5. the exact disk backup tier.
 
-See [Changed-file map](delta-v0.22.1.md), [Integration](integration.md), and
-[Compatibility](compatibility.md).
+See [Integration](integration.md) and [Testing](testing.md).
 
 ## Responsibility boundary
 
@@ -66,7 +62,6 @@ bundle cannot be treated as a valid restore source.
 
 ## Limitations
 
-- The fork is pinned to upstream vLLM `v0.22.1`; later upstream releases are untested.
 - CPU and disk backups are process-local and cannot be shared between workers.
 - Eager prebackup increases startup time and pinned host memory by one local weight shard.
 - Exact disk backup is experimental and depends on local filesystem/direct-I/O behavior.

@@ -2,7 +2,7 @@
 
 This guide starts the controller and a launcher-managed pool of single-model vLLM Switch
 backends. Read the [compatibility matrix](compatibility.md) first; stock vLLM does not
-implement the v0.1 CPU-backup coordinator contract.
+implement the CPU-backup coordinator contract.
 
 ## 1. Install and verify
 
@@ -75,7 +75,7 @@ VLLM_SERVER_DEV_MODE=1
 vllm serve /path/to/model --enable-sleep-mode
 ```
 
-The v0.1 CPU-backup coordinator additionally uses:
+The CPU-backup coordinator additionally uses:
 
 ```text
 VLLM_CPU_BACKUP_COORDINATOR=http

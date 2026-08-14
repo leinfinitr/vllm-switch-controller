@@ -1,8 +1,5 @@
 # Compatibility Contract
 
-The engine in this combination is based on upstream vLLM `v0.22.1` at
-`0decac0d96c42b49572498019f0a0e3600f50398`.
-
 ## CPU backup protocol v1
 
 Protocol v1 defines these controller/worker capabilities:
@@ -53,14 +50,14 @@ The controller never invents or injects a disk location.
 ## Supported Python versions
 
 The controller CI covers Python 3.11 and 3.12. vLLM, CUDA, PyTorch, GPU architecture, and
-model compatibility are governed by the pinned engine rather than the lightweight
+model compatibility are governed by the companion engine rather than the lightweight
 controller package.
 
 ## Non-guarantees
 
-The published v0.1 suite does not claim compatibility with:
+The current implementation does not claim compatibility with:
 
-- arbitrary upstream vLLM releases after `v0.22.1`;
+- arbitrary upstream vLLM checkouts;
 - stock vLLM coordinator clients (stock vLLM has no such client);
 - multiple active controller replicas;
 - out-of-tree worker clients that omit process incarnation or monotonic release counters;

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from yaml import safe_load
 
-from controller.config import load_config
+from vllm_switch_controller.config import load_config
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE_CONFIGS = {

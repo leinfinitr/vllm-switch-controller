@@ -22,19 +22,19 @@ vLLM worker <-- cumulative target_free_bytes -------- controller
 
 ## Runtime Components
 
-- `controller/router.py` implements the OpenAI-compatible data plane and `/admin/*`
+- `vllm_switch_controller/router.py` implements the OpenAI-compatible data plane and `/admin/*`
   management plane.
-- `controller/state.py` owns lifecycle state, active-request reservations, draining,
+- `vllm_switch_controller/state.py` owns lifecycle state, active-request reservations, draining,
   and the global switch lock.
-- `controller/vllm_client.py` calls backend health and lifecycle endpoints and proxies
+- `vllm_switch_controller/vllm_client.py` calls backend health and lifecycle endpoints and proxies
   inference traffic. Explicit backend traffic does not inherit environment proxies.
-- `controller/policies.py` decides which model to sleep or wake for a target alias.
-- `controller/metrics.py` records per-request queue, switch, transport first-byte, and
+- `vllm_switch_controller/policies.py` decides which model to sleep or wake for a target alias.
+- `vllm_switch_controller/metrics.py` records per-request queue, switch, transport first-byte, and
   completion data.
-- `controller/processes.py` reads Linux PID/PGID/start-time identity for safe pool cleanup.
-- `controller/backup_pool.py` stores only per-process aggregate byte categories,
+- `vllm_switch_controller/processes.py` reads Linux PID/PGID/start-time identity for safe pool cleanup.
+- `vllm_switch_controller/backup_pool.py` stores only per-process aggregate byte categories,
   priorities, cumulative commands, and release obligations.
-- `controller/memory_pressure.py` reads host `MemAvailable` and applies debounce,
+- `vllm_switch_controller/memory_pressure.py` reads host `MemAvailable` and applies debounce,
   low/high watermarks, and a reclaim cooldown.
 
 ## Request Switching
@@ -161,15 +161,15 @@ fails closed if a numeric PID/PGID was reused.
 ## Repository Boundaries
 
 ```text
-vllm/
+vllm-switch/
   allocator-local backup state, eager snapshots, version invalidation,
   sleep transactions, physical reclamation, coordinator client
 
-vllm-model-switch-controller/
+vllm-switch-controller/
   multi-backend lifecycle, request drain, OpenAI proxy,
   aggregate accounting, host-pressure policy
 
-llm-switch-bench/
+vllm-switch-bench/
   benchmark adapters, raw and curated evidence, plots, reports
 ```
 

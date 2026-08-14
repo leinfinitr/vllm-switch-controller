@@ -1,1 +1,1 @@
-"""Operational helpers shipped with vLLM Switch Controller."""
+"""Operational helpers shipped with vllm-switch-controller."""

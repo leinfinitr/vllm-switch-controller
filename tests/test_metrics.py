@@ -1,6 +1,6 @@
 import json
 
-from controller.metrics import MetricsRecorder, RequestMetrics
+from vllm_switch_controller.metrics import MetricsRecorder, RequestMetrics
 
 
 def test_metrics_recorder_appends_jsonl(tmp_path):

@@ -9,12 +9,12 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 
-from controller.backup_pool import BackupPoolState
-from controller.config import ControllerConfig
-from controller.memory_pressure import MemoryPressureMonitor
-from controller.metrics import RequestMetrics
-from controller.policies import SwitchingPolicy
-from controller.schemas import (
+from vllm_switch_controller.backup_pool import BackupPoolState
+from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.memory_pressure import MemoryPressureMonitor
+from vllm_switch_controller.metrics import RequestMetrics
+from vllm_switch_controller.policies import SwitchingPolicy
+from vllm_switch_controller.schemas import (
     CPU_BACKUP_CAPABILITIES,
     CPU_BACKUP_PROTOCOL_VERSION,
     BackupRegisterRequest,
@@ -23,8 +23,8 @@ from controller.schemas import (
     OpenAIModel,
     OpenAIModelsResponse,
 )
-from controller.state import ControllerState, ModelState, UnknownModelError
-from controller.vllm_client import (
+from vllm_switch_controller.state import ControllerState, ModelState, UnknownModelError
+from vllm_switch_controller.vllm_client import (
     VLLMClient,
     VLLMClientError,
     filter_end_to_end_headers,

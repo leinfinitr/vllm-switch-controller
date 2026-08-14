@@ -1,8 +1,8 @@
 import pytest
 
-from controller.backup_pool import BackupPoolState
-from controller.config import ControllerConfig
-from controller.memory_pressure import MemoryPressureMonitor, SystemMemorySnapshot
+from vllm_switch_controller.backup_pool import BackupPoolState
+from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.memory_pressure import MemoryPressureMonitor, SystemMemorySnapshot
 
 
 def usage(

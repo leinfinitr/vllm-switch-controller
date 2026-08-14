@@ -5,8 +5,12 @@ import pytest
 from fastapi import FastAPI, Request, Response
 from httpx import ASGITransport
 
-from controller.config import ModelSpec
-from controller.vllm_client import VLLMClient, VLLMClientError, filter_end_to_end_headers
+from vllm_switch_controller.config import ModelSpec
+from vllm_switch_controller.vllm_client import (
+    VLLMClient,
+    VLLMClientError,
+    filter_end_to_end_headers,
+)
 
 
 def make_client() -> VLLMClient:

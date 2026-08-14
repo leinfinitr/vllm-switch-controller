@@ -20,7 +20,7 @@
 ```text
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
+uv run ruff check vllm_switch_controller scripts tests
 uv build
 ```
 

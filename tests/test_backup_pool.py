@@ -2,10 +2,10 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from pydantic import ValidationError
 
-from controller.backup_pool import BackupPoolState
-from controller.config import ControllerConfig
-from controller.main import create_app
-from controller.schemas import BackupUsageRequest
+from vllm_switch_controller.backup_pool import BackupPoolState
+from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.main import create_app
+from vllm_switch_controller.schemas import BackupUsageRequest
 
 
 def test_backup_pool_state_tracks_aggregate_usage_and_release_bytes():

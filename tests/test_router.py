@@ -7,13 +7,13 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from httpx import ASGITransport, AsyncClient
 
-import controller.router as router_module
-from controller.config import ControllerConfig
-from controller.main import create_app
-from controller.metrics import MetricsRecorder
-from controller.router import CancellationResistantCleanup, CleanupStreamingResponse
-from controller.state import ModelState
-from controller.vllm_client import VLLMClientError
+import vllm_switch_controller.router as router_module
+from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.main import create_app
+from vllm_switch_controller.metrics import MetricsRecorder
+from vllm_switch_controller.router import CancellationResistantCleanup, CleanupStreamingResponse
+from vllm_switch_controller.state import ModelState
+from vllm_switch_controller.vllm_client import VLLMClientError
 
 
 def make_backend(label: str, events: list[str]) -> FastAPI:

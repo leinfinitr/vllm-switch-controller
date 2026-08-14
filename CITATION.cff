@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: vLLM Model Switch Controller
+title: vllm-switch-controller
 message: Cite the repository commit you used and the accompanying publication when available.
 type: software
 authors:
-  - name: vLLM Switch contributors
+  - name: vllm-switch-controller contributors
 license: Apache-2.0
-repository-code: https://github.com/leinfinitr/vllm-switch
-url: https://github.com/leinfinitr/vllm-switch
+repository-code: https://github.com/leinfinitr/vllm-switch-controller
+url: https://github.com/leinfinitr/vllm-switch-controller
 keywords:
   - vLLM
   - model serving

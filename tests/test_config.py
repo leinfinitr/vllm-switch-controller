@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from controller.config import ControllerConfig, load_config
+from vllm_switch_controller.config import ControllerConfig, load_config
 
 
 def test_load_config_parses_models_and_controller(tmp_path):

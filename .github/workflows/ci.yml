@@ -24,10 +24,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --dev
       - run: uv run python -m pytest tests -q
-      - run: uv run ruff check controller scripts tests
-      - run: uv run ruff format --check controller scripts tests
+      - run: uv run ruff check vllm_switch_controller scripts tests
+      - run: uv run ruff format --check vllm_switch_controller scripts tests
       - if: matrix.python-version == '3.11'
-        run: uv run mypy --ignore-missing-imports controller
+        run: uv run mypy --ignore-missing-imports vllm_switch_controller
 
   package:
     runs-on: ubuntu-latest

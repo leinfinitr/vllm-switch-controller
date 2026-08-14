@@ -1,6 +1,6 @@
-# vLLM Model Switch Controller
+# vllm-switch-controller
 
-[![CI](https://github.com/leinfinitr/vllm-switch/actions/workflows/ci.yml/badge.svg)](https://github.com/leinfinitr/vllm-switch/actions/workflows/ci.yml)
+[![CI](https://github.com/leinfinitr/vllm-switch-controller/actions/workflows/ci.yml/badge.svg)](https://github.com/leinfinitr/vllm-switch-controller/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 An experimental external control plane that routes OpenAI-compatible requests across
@@ -10,6 +10,9 @@ long-lived, single-model vLLM backends and serializes their sleep/wake lifecycle
 > The controller has no authentication, authorization, or TLS. Its data and management
 > APIs share one listener. Keep it on loopback or a trusted management network and place
 > an authenticated reverse proxy in front of it when remote access is required.
+
+Unqualified `vLLM` refers to the upstream project and its baseline behavior. The fork-specific
+mechanisms in this repository are named `vllm-switch`.
 
 ## Capabilities
 
@@ -22,28 +25,28 @@ For upstream [vLLM](https://github.com/vllm-project/vllm) backends, the controll
 - Holds exactly one reservation for complete JSON and streaming request lifetimes.
 - Launches a single-GPU backend pool sequentially and stops only verified owned groups.
 
-For modified [vLLM Switch fork](https://github.com/leinfinitr/vllm) backends, additionally:
+For [vllm-switch](https://github.com/leinfinitr/vllm-switch) backends, additionally:
 
 - Coordinates aggregate CPU-backup accounting without owning tensors or copies.
-- Requests cooperative CPU-backup reclaim from vLLM under host-memory pressure.
+- Requests cooperative CPU-backup reclaim from vllm-switch under host-memory pressure.
 
-vLLM Switch is useful for:
+vllm-switch is useful for:
 
 - Running multiple models on a single GPU with minimal HBM usage.
-- Managing sleep/wake cycles across multiple vLLM processes.
+- Managing sleep/wake cycles across multiple vllm-switch processes.
 - Using idle CPU memory for backup storage and reclaiming it when needed.
 - Using direct I/O for exact disk snapshots and recovery.
 
-The companion [vLLM Switch fork](https://github.com/leinfinitr/vllm) owns pinned CPU
+The companion [vllm-switch](https://github.com/leinfinitr/vllm-switch) owns pinned CPU
 backups, eager prebackup, D2H/H2D, validity, concrete reclaim, and exact disk snapshots.
-The [llm-switch-bench](https://github.com/leinfinitr/llm-switch-bench) repository owns
+The [vllm-switch-bench](https://github.com/leinfinitr/vllm-switch-bench) repository owns
 cross-system experiments, results and plots.
 
 ## Requirements
 
 - Linux and Python 3.11 or newer.
 - [`uv`](https://docs.astral.sh/uv/) for the source workflow.
-- The companion vLLM Switch fork for the full backup feature set. Stock vLLM can supply
+- The companion vllm-switch for the full backup feature set. Upstream vLLM can supply
   basic sleep endpoints but not this coordinator contract.
 - Enough GPU memory to initialize each configured model individually.
 
@@ -130,9 +133,9 @@ unrelated process.
 ```bash
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
-uv run ruff format --check controller scripts tests
-uv run mypy --ignore-missing-imports controller
+uv run ruff check vllm_switch_controller scripts tests
+uv run ruff format --check vllm_switch_controller scripts tests
+uv run mypy --ignore-missing-imports vllm_switch_controller
 uv build
 ```
 

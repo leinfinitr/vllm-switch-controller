@@ -1,6 +1,6 @@
 from typing import NamedTuple, Protocol
 
-from controller.state import ModelState
+from vllm_switch_controller.state import ModelState
 
 
 class SwitchDecision(NamedTuple):

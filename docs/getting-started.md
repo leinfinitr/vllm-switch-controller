@@ -1,7 +1,7 @@
 # Getting Started
 
-This guide starts the controller and a launcher-managed pool of single-model vLLM Switch
-backends. Read the [compatibility matrix](compatibility.md) first; stock vLLM does not
+This guide starts the controller and a launcher-managed pool of single-model vllm-switch
+backends. Read the [compatibility matrix](compatibility.md) first; upstream vLLM does not
 implement the CPU-backup coordinator contract.
 
 ## 1. Install and verify
@@ -11,7 +11,7 @@ Requirements:
 - Linux;
 - Python 3.11 or newer;
 - `uv`;
-- a CUDA environment supported by the selected vLLM Switch revision;
+- a CUDA environment supported by the selected vllm-switch revision;
 - enough GPU memory to initialize each model separately.
 
 From the repository root:
@@ -19,7 +19,7 @@ From the repository root:
 ```bash
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
+uv run ruff check vllm_switch_controller scripts tests
 ```
 
 The controller package deliberately does not depend on vLLM, PyTorch, NumPy, or plotting

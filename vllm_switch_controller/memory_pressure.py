@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from controller.backup_pool import BackupPoolState
+from vllm_switch_controller.backup_pool import BackupPoolState
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,6 @@
 import pytest
 
-from controller.state import ControllerState, ModelState, UnknownModelError
+from vllm_switch_controller.state import ControllerState, ModelState, UnknownModelError
 
 
 def test_initial_state_marks_startup_model_awake_and_others_sleeping():

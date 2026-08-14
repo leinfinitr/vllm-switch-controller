@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from controller.processes import ProcessIdentity
 from scripts import launch_vllm_pool
+from vllm_switch_controller.processes import ProcessIdentity
 
 
 @pytest.mark.asyncio

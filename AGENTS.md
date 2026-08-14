@@ -18,7 +18,7 @@ remain inside vLLM.
   ignored `configs/*.local.yaml` files.
 - Keep live output in ignored `results/`, `tmp/`, or operator-selected paths.
 - Put benchmark adapters, data collection, raw/curated evidence, plots, and reports in
-  `llm-switch-bench`.
+  `vllm-switch-bench`.
 - Keep public text in English and current tracked files free of developer-machine paths.
 - Preserve fail-closed lifecycle behavior and exactly-once streaming reservations.
 - Treat protocol versions, capabilities, process-incarnation identity, and PID ownership
@@ -31,9 +31,9 @@ The fast verification gate is:
 ```bash
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
-uv run ruff format --check controller scripts tests
-uv run mypy --ignore-missing-imports controller
+uv run ruff check vllm_switch_controller scripts tests
+uv run ruff format --check vllm_switch_controller scripts tests
+uv run mypy --ignore-missing-imports vllm_switch_controller
 uv build
 ```
 
@@ -45,7 +45,7 @@ or create tags or releases without explicit maintainer direction.
 
 ## Related repositories
 
-- `../vllm`: allocator-local CPU backup state, eager snapshot, mutation invalidation,
-  sleep transactions, exact disk backup, and coordinator client.
-- `../llm-switch-bench`: cross-system benchmark adapters, raw/curated evidence, plots, and
+- `../vllm-switch`: the `vllm-switch` fork; allocator-local CPU backup state, eager snapshot,
+  mutation invalidation, sleep transactions, exact disk backup, and coordinator client.
+- `../vllm-switch-bench`: cross-system benchmark adapters, raw/curated evidence, plots, and
   reports.

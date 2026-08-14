@@ -58,7 +58,7 @@ controller package.
 The current implementation does not claim compatibility with:
 
 - arbitrary upstream vLLM checkouts;
-- stock vLLM coordinator clients (stock vLLM has no such client);
+- upstream vLLM coordinator clients (upstream vLLM has no such client);
 - multiple active controller replicas;
 - out-of-tree worker clients that omit process incarnation or monotonic release counters;
 - Windows or macOS process management and `/proc` memory monitoring.

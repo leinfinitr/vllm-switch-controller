@@ -4,8 +4,8 @@ import time
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from controller.config import ControllerConfig
-from controller.main import create_app
+from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.main import create_app
 
 
 def config_payload(tmp_path, *, timeout_s: float):

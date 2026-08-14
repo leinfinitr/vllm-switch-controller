@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "vllm-switch-controller"
 version = "0.1.0"
-description = "External model-switching control plane for vLLM Switch"
+description = "External model-switching control plane for vllm-switch"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
-    {name = "vLLM Switch contributors"},
+    {name = "vllm-switch-controller contributors"},
 ]
 keywords = ["vllm", "llm", "model-serving", "model-switching"]
 classifiers = [
@@ -34,13 +34,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/leinfinitr/vllm-switch"
-Documentation = "https://github.com/leinfinitr/vllm-switch/tree/master/docs"
-Issues = "https://github.com/leinfinitr/vllm-switch/issues"
-Source = "https://github.com/leinfinitr/vllm-switch"
+Homepage = "https://github.com/leinfinitr/vllm-switch-controller"
+Documentation = "https://github.com/leinfinitr/vllm-switch-controller/tree/master/docs"
+Issues = "https://github.com/leinfinitr/vllm-switch-controller/issues"
+Source = "https://github.com/leinfinitr/vllm-switch-controller"
 
 [project.scripts]
-vllm-switch-controller = "controller.main:main"
+vllm-switch-controller = "vllm_switch_controller.main:main"
 vllm-switch-launch = "scripts.launch_vllm_pool:main"
 vllm-switch-smoke = "scripts.smoke_openai_switch:main"
 vllm-switch-stop = "scripts.stop_vllm_pool:main"
@@ -57,7 +57,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["controller", "scripts"]
+packages = ["vllm_switch_controller", "scripts"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

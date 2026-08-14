@@ -1,7 +1,7 @@
-from controller.policies import (
+from vllm_switch_controller.policies import (
     AlwaysSleepPreviousPolicy,
 )
-from controller.state import ModelState
+from vllm_switch_controller.state import ModelState
 
 
 def test_same_target_model_does_not_switch():

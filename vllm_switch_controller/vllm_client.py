@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from controller.config import ModelSpec
+from vllm_switch_controller.config import ModelSpec
 
 
 class VLLMClientError(RuntimeError):

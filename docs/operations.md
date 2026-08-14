@@ -106,7 +106,7 @@ complete, and `wake_tags` must be null or a non-empty unique list.
 
 ### A backend never becomes healthy
 
-Run its configured argument vector directly. Check the vLLM Switch revision, model path,
+Run its configured argument vector directly. Check the vllm-switch revision, model path,
 CUDA/PyTorch compatibility, port availability, and that the command uses the backend
 virtual environment rather than the controller environment.
 
@@ -150,11 +150,11 @@ clients with `NO_PROXY` for loopback/private endpoints if necessary.
 ```bash
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
-uv run ruff format --check controller scripts tests
-uv run mypy --ignore-missing-imports controller
+uv run ruff check vllm_switch_controller scripts tests
+uv run ruff format --check vllm_switch_controller scripts tests
+uv run mypy --ignore-missing-imports vllm_switch_controller
 uv build
 ```
 
 Cross-system workloads, resource collection, plots, and curated results belong in
-`llm-switch-bench`.
+`vllm-switch-bench`.

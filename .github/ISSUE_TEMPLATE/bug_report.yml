@@ -16,7 +16,7 @@ body:
   - type: input
     id: engine-version
     attributes:
-      label: vLLM Switch version or commit
+      label: vllm-switch version or commit
     validations:
       required: true
   - type: textarea

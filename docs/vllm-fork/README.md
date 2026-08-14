@@ -1,6 +1,6 @@
-# vLLM Switch Fork
+# vllm-switch
 
-The companion vLLM Switch repository keeps tensor correctness and data movement inside each
+The companion vllm-switch repository keeps tensor correctness and data movement inside each
 vLLM process; this controller remains a metadata-only external control plane.
 
 It adds five mechanisms:

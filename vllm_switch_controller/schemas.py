@@ -48,7 +48,7 @@ class OpenAIModel(BaseModel):
     id: str
     object: str = "model"
     created: int = 0
-    owned_by: str = "vllm-model-switch-controller"
+    owned_by: str = "vllm-switch-controller"
 
 
 class OpenAIModelsResponse(BaseModel):

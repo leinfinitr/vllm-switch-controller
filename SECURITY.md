@@ -2,7 +2,7 @@
 
 ## Project Status
 
-The vLLM Model Switch Controller is an experimental research system. It has not received
+The vllm-switch-controller is an experimental research system. It has not received
 a production security audit and does not provide authentication, authorization, rate
 limiting, tenant isolation, or TLS termination.
 

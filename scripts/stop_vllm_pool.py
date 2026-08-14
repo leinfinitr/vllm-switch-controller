@@ -5,7 +5,7 @@ import signal
 from pathlib import Path
 from typing import Any
 
-from controller.processes import (
+from vllm_switch_controller.processes import (
     ProcessIdentity,
     read_process_identity,
     wait_process_group_empty,

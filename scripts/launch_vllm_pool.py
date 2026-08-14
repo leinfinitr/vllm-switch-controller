@@ -10,8 +10,8 @@ from typing import Any
 
 import httpx
 
-from controller.config import load_config
-from controller.processes import read_process_identity, wait_process_group_empty
+from vllm_switch_controller.config import load_config
+from vllm_switch_controller.processes import read_process_identity, wait_process_group_empty
 
 
 async def wait_health(url: str, timeout_s: float = 600) -> None:

@@ -5,14 +5,14 @@ from contextlib import asynccontextmanager, suppress
 import uvicorn
 from fastapi import FastAPI
 
-from controller.backup_pool import BackupPoolState
-from controller.config import ControllerConfig, load_config
-from controller.memory_pressure import MemoryPressureMonitor
-from controller.metrics import MetricsRecorder
-from controller.policies import make_policy
-from controller.router import make_router
-from controller.state import ControllerState
-from controller.vllm_client import VLLMClient
+from vllm_switch_controller.backup_pool import BackupPoolState
+from vllm_switch_controller.config import ControllerConfig, load_config
+from vllm_switch_controller.memory_pressure import MemoryPressureMonitor
+from vllm_switch_controller.metrics import MetricsRecorder
+from vllm_switch_controller.policies import make_policy
+from vllm_switch_controller.router import make_router
+from vllm_switch_controller.state import ControllerState
+from vllm_switch_controller.vllm_client import VLLMClient
 
 
 def create_app(config: ControllerConfig) -> FastAPI:
@@ -55,7 +55,7 @@ def create_app(config: ControllerConfig) -> FastAPI:
             await vllm_client.aclose()
 
     app = FastAPI(
-        title="vLLM Model Switch Controller",
+        title="vllm-switch-controller",
         # OpenAPI requires an info.version string; avoid presenting package metadata as a
         # release declaration for the source checkout.
         version="unversioned",
@@ -81,7 +81,7 @@ def create_app(config: ControllerConfig) -> FastAPI:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the vLLM model switch controller")
+    parser = argparse.ArgumentParser(description="Run the vllm-switch-controller")
     parser.add_argument("--config", default="configs/models.launcher.example.yaml")
     args = parser.parse_args()
     config = load_config(args.config)

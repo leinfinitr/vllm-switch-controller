@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for improving the vLLM Model Switch Controller. This repository is a research
+Thank you for improving the vllm-switch-controller. This repository is a research
 control plane with correctness-sensitive lifecycle and streaming paths. Small, focused,
 well-tested changes are easier to validate and reproduce.
 
@@ -10,7 +10,7 @@ well-tested changes are easier to validate and reproduce.
 - Report security concerns privately as described in [SECURITY.md](SECURITY.md).
 - Read [Architecture](docs/architecture.md) and the repository scope in `AGENTS.md`.
 - Put allocator-local tensor behavior in the companion `vllm` repository.
-- Put cross-system benchmark harnesses, plots, and reports in `llm-switch-bench`.
+- Put cross-system benchmark harnesses, plots, and reports in `vllm-switch-bench`.
 
 ## Development Setup
 
@@ -19,9 +19,9 @@ The documented workflow uses Python 3.11 or newer and `uv`:
 ```bash
 uv sync --frozen --dev
 uv run python -m pytest tests -q
-uv run ruff check controller scripts tests
-uv run ruff format --check controller scripts tests
-uv run mypy --ignore-missing-imports controller
+uv run ruff check vllm_switch_controller scripts tests
+uv run ruff format --check vllm_switch_controller scripts tests
+uv run mypy --ignore-missing-imports vllm_switch_controller
 uv build
 ```
 
@@ -93,7 +93,7 @@ Do not commit:
 - access tokens, private endpoints, or credentials;
 - model weights or downloaded datasets;
 - PID files, logs, or ad hoc run output;
-- raw benchmark runs intended for `llm-switch-bench`.
+- raw benchmark runs intended for `vllm-switch-bench`.
 
 Use ignored `results/tmp/` or `tmp/` paths for transient output. Curated evidence must be
 small, reproducible, documented, and intentionally reviewed.
@@ -103,7 +103,7 @@ small, reproducible, documented, and intentionally reviewed.
 - [ ] The change has one clear purpose and stays within repository scope.
 - [ ] New behavior has focused tests.
 - [ ] `uv run python -m pytest tests -q` passes.
-- [ ] `uv run ruff check controller scripts tests` passes.
+- [ ] `uv run ruff check vllm_switch_controller scripts tests` passes.
 - [ ] `uv build` and isolated wheel/CLI smoke checks pass.
 - [ ] User-facing docs and example configuration are updated in English.
 - [ ] Lifecycle and exactly-once reservation contracts are preserved.

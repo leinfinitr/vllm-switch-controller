@@ -92,4 +92,4 @@ safe to release. See [CPU Backup Coordinator](cpu_backup_coordinator.md).
 - Keep paths, model IDs, tokens, and host-specific settings in ignored
   `configs/*.local.yaml` files.
 - Put transient metrics under ignored `results/` or `tmp/` paths.
-- Put benchmark configurations and evidence in `llm-switch-bench`, not this repository.
+- Put benchmark configurations and evidence in `vllm-switch-bench`, not this repository.

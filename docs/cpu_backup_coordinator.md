@@ -1,12 +1,12 @@
 # CPU Backup Coordinator
 
 The controller coordinates aggregate usage of process-local pinned CPU backups and
-applies a host-memory pressure policy. vLLM always owns the data plane and correctness
+applies a host-memory pressure policy. `vllm-switch` always owns the data plane and correctness
 state; the controller issues byte targets only.
 
 ## Responsibility Boundary
 
-| vLLM worker | Controller |
+| vllm-switch worker | Controller |
 |---|---|
 | Owns pinned tensors | Never receives tensors or backup IDs |
 | Performs D2H and H2D copies | Aggregates per-process and per-model bytes |
@@ -77,7 +77,7 @@ total_bytes == required_for_restore_bytes
 
 The latter three categories are evictable. Required RAM can additionally be declared
 reclaimable only when the exact-disk capability and a usable disk source are reported.
-vLLM's local release order is:
+`vllm-switch`'s local release order is:
 
 ```text
 FREE_LOCAL -> INVALID -> CACHE_ONLY
@@ -108,7 +108,7 @@ A worker executes only the cumulative delta it has not observed in the current e
 The GET is therefore idempotent: a lost response can be retried, and a duplicate response
 does not release the same bytes twice.
 
-A command is an obligation, not an acknowledgement of completion. vLLM increments
+A command is an obligation, not an acknowledgement of completion. `vllm-switch` increments
 `released_bytes_total` only when process-local pool `reserved_bytes` actually falls. The
 controller acknowledges progress from its monotonic delta:
 
@@ -177,7 +177,7 @@ Clients receive byte budgets in this order:
 2. older usage `updated_at` timestamp;
 3. larger remaining evictable footprint.
 
-This order chooses only a client and byte budget. vLLM still selects concrete storage.
+This order chooses only a client and byte budget. `vllm-switch` still selects concrete storage.
 
 ### Optional Hard Cap
 
@@ -197,7 +197,7 @@ Lifecycle and request-reservation safety are independent of the aggregate coordi
 The switch lock serializes model transitions, and a policy that sleeps the old model must
 wait for its in-flight requests. The proxy reserves the target while holding that lock.
 
-Coordinator failure cannot change tensor validity or permit unsafe release because vLLM
+Coordinator failure cannot change tensor validity or permit unsafe release because `vllm-switch`
 enforces all local state checks. Conversely, successful aggregate accounting does not
 prove that request switching or physical reclamation succeeded. Each layer needs its own
 evidence. See [Architecture](architecture.md) for request cancellation and fail-closed
@@ -237,7 +237,7 @@ defaults and enablement rules.
 - pressure state, watermarks, consecutive samples, target and unresolved bytes, and
   probe errors.
 
-Important cumulative fields in vLLM sleep profiles include:
+Important cumulative fields in `vllm-switch` sleep profiles include:
 
 ```text
 cpu_backup_release_bytes
@@ -250,7 +250,7 @@ Benchmarks must calculate step deltas from cumulative counters. A decrease in
 `total_bytes` proves application-level logical release only. Physical reclaim requires
 correlated worker process-tree RSS and host `MemAvailable` changes.
 
-PyTorch may keep deleted pinned tensors in its host caching allocator. The research vLLM
+PyTorch may keep deleted pinned tensors in its host caching allocator. `vllm-switch`
 release path makes a best-effort process-wide call to the private
 `torch._C._host_emptyCache()` API. Failure does not compromise sleep/wake correctness,
 but RSS may remain high. Report flush errors and OS metrics instead of claiming physical

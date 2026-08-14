@@ -1,7 +1,7 @@
 # vllm-switch
 
 The companion vllm-switch repository keeps tensor correctness and data movement inside each
-vLLM process; this controller remains a metadata-only external control plane.
+`vllm-switch` process; this controller remains a metadata-only external control plane.
 
 It adds five mechanisms:
 
@@ -15,7 +15,7 @@ See [Integration](integration.md) and [Testing](testing.md).
 
 ## Responsibility boundary
 
-| vLLM worker | Controller |
+| vllm-switch worker | Controller |
 |---|---|
 | Owns pinned tensors and disk bundles | Never receives backup bytes or tensor IDs |
 | Performs D2H/H2D and CUDA VMM changes | Serializes backend lifecycle calls |
@@ -35,7 +35,7 @@ must not be described as eliminating both directions of copy.
 
 ### Eager prebackup
 
-After weight loading, profiling, kernel warmup, and CUDA graph capture, vLLM synchronously
+After weight loading, profiling, kernel warmup, and CUDA graph capture, `vllm-switch` synchronously
 publishes a clean weight snapshot before readiness. The first level-1 sleep can therefore
 reuse it. Mutation paths invalidate snapshots through content versions; they do not trust
 stale bytes.

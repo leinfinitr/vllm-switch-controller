@@ -5,7 +5,7 @@
 ## Ownership boundary
 
 - [ ] Controller-only change
-- [ ] Requires a coordinated vLLM fork change
+- [ ] Requires a coordinated `vllm-switch` change
 - [ ] Requires a benchmark/artifact change
 
 ## Correctness checklist

@@ -65,7 +65,7 @@ controller:
 as repeated `tags` parameters. Use partial wake only when the selected tags restore every
 allocation needed by subsequent inference.
 
-## 3. Configure the compatible vLLM fork
+## 3. Configure the compatible vllm-switch
 
 Every backend must expose `/health`, `/sleep`, `/wake_up`, and `/is_sleeping`. Launcher
 commands need at least:
@@ -167,4 +167,4 @@ Stop the controller separately with `Ctrl-C`.
 
 - [Configuration reference](configuration.md)
 - [Operations and troubleshooting](operations.md)
-- [vLLM integration and limitations](vllm-fork/README.md)
+- [vLLM integration and limitations](vllm-switch/README.md)

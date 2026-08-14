@@ -23,7 +23,7 @@ directly to `subprocess.Popen`; no shell is used.
 
 ### Exact disk environment contract
 
-The controller does not inject a disk path. The compatible vLLM fork uses only these
+The controller does not inject a disk path. The compatible vllm-switch uses only these
 canonical variables:
 
 | Variable | Meaning |

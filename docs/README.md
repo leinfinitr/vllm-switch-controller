@@ -13,8 +13,8 @@
 - [Architecture](architecture.md): request ownership and failure invariants.
 - [CPU backup coordinator](cpu_backup_coordinator.md): accounting and reclaim semantics.
 
-## Companion vLLM fork
+## Companion vllm-switch
 
-- [Fork overview](vllm-fork/README.md)
-- [Controller–vLLM integration](vllm-fork/integration.md)
-- [Fork testing](vllm-fork/testing.md)
+- [Fork overview](vllm-switch/README.md)
+- [Controller–vLLM integration](vllm-switch/integration.md)
+- [Fork testing](vllm-switch/testing.md)

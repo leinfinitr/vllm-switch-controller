@@ -51,7 +51,7 @@ cross-system experiments, results and plots.
 - Enough GPU memory to initialize each configured model individually.
 
 See the [compatibility contract](docs/compatibility.md) and
-[vLLM fork integration](docs/vllm-fork/README.md).
+[vllm-switch integration](docs/vllm-switch/README.md).
 
 ## Install
 
@@ -125,7 +125,7 @@ unrelated process.
 - [API reference](docs/api.md)
 - [Architecture and safety invariants](docs/architecture.md)
 - [CPU backup coordinator protocol](docs/cpu_backup_coordinator.md)
-- [vLLM fork integration](docs/vllm-fork/README.md)
+- [vllm-switch integration](docs/vllm-switch/README.md)
 - [Compatibility matrix](docs/compatibility.md)
 
 ## Development

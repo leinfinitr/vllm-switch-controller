@@ -1,4 +1,4 @@
-# vLLM Fork Testing
+# vllm-switch Testing
 
 Each engine change must revalidate:
 
@@ -12,7 +12,7 @@ Each engine change must revalidate:
 
 ## CPU-focused tests
 
-Run from the companion vLLM environment:
+Run from the companion `vllm-switch` environment:
 
 ```bash
 .venv/bin/python -m pytest -q \

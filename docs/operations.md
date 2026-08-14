@@ -127,7 +127,7 @@ the operator must include all allocations required by the subsequent operation.
 
 The wire contract requires `protocol_version: 1`, a declared capabilities list, and a
 monotonic `released_bytes_total` on usage reports. Exact-disk fields require
-`exact-disk-accounting-v1`. This normally means the controller and vLLM fork revisions do
+`exact-disk-accounting-v1`. This normally means the controller and vllm-switch revisions do
 not match; consult [Compatibility](compatibility.md).
 
 ### Coordinator requests return `409`

@@ -167,4 +167,4 @@ Stop the controller separately with `Ctrl-C`.
 
 - [Configuration reference](configuration.md)
 - [Operations and troubleshooting](operations.md)
-- [vLLM integration and limitations](vllm-switch/README.md)
+- [vllm-switch integration and limitations](vllm-switch/README.md)

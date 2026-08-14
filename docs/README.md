@@ -16,5 +16,5 @@
 ## Companion vllm-switch
 
 - [Fork overview](vllm-switch/README.md)
-- [Controller–vLLM integration](vllm-switch/integration.md)
+- [Controller–vllm-switch integration](vllm-switch/integration.md)
 - [Fork testing](vllm-switch/testing.md)

@@ -83,7 +83,7 @@ high = max(MemTotal * recovery_ratio, recovery_bytes)
 | `cpu_backup_default_model_priority` | `0` | Default victim priority. |
 | `cpu_backup_model_priorities` | `{}` | Per-model priorities; lower values go first. |
 
-The controller sends byte budgets only. The vLLM process decides which local allocation is
+The controller sends byte budgets only. The `vllm-switch` process decides which local allocation is
 safe to release. See [CPU Backup Coordinator](cpu_backup_coordinator.md).
 
 ## Local files

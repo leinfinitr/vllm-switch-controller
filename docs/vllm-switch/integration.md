@@ -1,4 +1,4 @@
-# Controller–vLLM Integration
+# Controller–vllm-switch Integration
 
 ## Backend lifecycle endpoints
 
@@ -16,7 +16,7 @@ closed.
 
 ## Wake tags
 
-The vLLM allocator assigns at least the `weights` and `kv_cache` tags in the supported
+The `vllm-switch` allocator assigns at least the `weights` and `kv_cache` tags in the supported
 worker path. The API accepts repeated query parameters:
 
 ```text

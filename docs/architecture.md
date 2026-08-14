@@ -7,7 +7,7 @@ owns request-driven model selection, lifecycle serialization, OpenAI-compatible 
 aggregate CPU backup accounting, and host-memory pressure policy.
 
 It does not execute models or own CPU/GPU backup contents. Those responsibilities stay
-inside vLLM so that tensor validity and copy synchronization cannot diverge across a
+inside `vllm-switch` so that tensor validity and copy synchronization cannot diverge across a
 network boundary.
 
 ```text
@@ -16,8 +16,8 @@ client
        -> vLLM backend A (:8101)
        -> vLLM backend B (:8102)
 
-vLLM worker -- aggregate usage and acknowledgement --> controller
-vLLM worker <-- cumulative target_free_bytes -------- controller
+vllm-switch worker -- aggregate usage and acknowledgement --> controller
+vllm-switch worker <-- cumulative target_free_bytes -------- controller
 ```
 
 ## Runtime Components
@@ -119,7 +119,7 @@ their upstream context open for the full downstream lifetime.
 
 ## CPU Backup Boundary
 
-The vLLM allocator owns pinned tensors, validity, D2H/H2D, in-flight copy protection, and
+The `vllm-switch` allocator owns pinned tensors, validity, D2H/H2D, in-flight copy protection, and
 the concrete release order. The controller receives aggregate usage and issues
 cumulative byte targets only.
 

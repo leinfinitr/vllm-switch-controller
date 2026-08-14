@@ -9,7 +9,7 @@ well-tested changes are easier to validate and reproduce.
 - Use the issue tracker to describe substantial behavior changes before implementation.
 - Report security concerns privately as described in [SECURITY.md](SECURITY.md).
 - Read [Architecture](docs/architecture.md) and the repository scope in `AGENTS.md`.
-- Put allocator-local tensor behavior in the companion `vllm` repository.
+- Put allocator-local tensor behavior in the companion `vllm-switch` repository.
 - Put cross-system benchmark harnesses, plots, and reports in `vllm-switch-bench`.
 
 ## Development Setup

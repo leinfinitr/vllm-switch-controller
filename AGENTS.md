@@ -6,7 +6,7 @@ This repository owns the external multi-backend control plane: model alias routi
 request reservations and drain, sleep/wake serialization, OpenAI proxying, aggregate
 CPU-backup accounting, host-memory pressure policy, and safe launcher-owned process-group
 lifecycle. Tensor validity, D2H/H2D, exact disk bundles, and concrete backup reclamation
-remain inside vLLM.
+remain inside `vllm-switch`.
 
 ## Repository conventions
 

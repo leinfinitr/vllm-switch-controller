@@ -23,7 +23,7 @@ body:
       label: Repository ownership
       options:
         - Controller routing/lifecycle
-        - vLLM allocator/worker
+        - vllm-switch allocator/worker
         - Benchmark/evidence
         - Unsure
     validations:

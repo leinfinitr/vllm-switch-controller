@@ -10,6 +10,7 @@
 
 - [Configuration](configuration.md): strict YAML fields and defaults.
 - [API](api.md): OpenAI-compatible and administrative endpoints.
+- [Process-local runtime](runtime.md): memory contracts, engine adapters, and fixed weights.
 - [Architecture](architecture.md): request ownership and failure invariants.
 - [CPU backup coordinator](cpu_backup_coordinator.md): accounting and reclaim semantics.
 

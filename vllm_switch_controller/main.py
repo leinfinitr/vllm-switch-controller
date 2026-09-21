@@ -7,18 +7,18 @@ from fastapi import FastAPI
 
 from vllm_switch_controller.backup_pool import BackupPoolState
 from vllm_switch_controller.config import ControllerConfig, load_config
+from vllm_switch_controller.engine_client import EngineClient
 from vllm_switch_controller.memory_pressure import MemoryPressureMonitor
 from vllm_switch_controller.metrics import MetricsRecorder
 from vllm_switch_controller.policies import make_policy
 from vllm_switch_controller.router import make_router
 from vllm_switch_controller.state import ControllerState
-from vllm_switch_controller.vllm_client import VLLMClient
 
 
 def create_app(config: ControllerConfig) -> FastAPI:
     state = ControllerState.from_models(list(config.models), config.controller.startup_awake_model)
     policy = make_policy(config.controller.policy)
-    vllm_client = VLLMClient(
+    vllm_client = EngineClient(
         config.models,
         request_timeout_s=config.controller.request_timeout_s,
         switch_timeout_s=config.controller.switch_timeout_s,

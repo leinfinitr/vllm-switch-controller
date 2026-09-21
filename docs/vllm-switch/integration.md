@@ -1,11 +1,16 @@
 # Controller–vllm-switch Integration
 
+Install this controller wheel in both the controller and engine Python environments.
+The engine loads `switch_runtime` as a general plugin. Its backup buffers stay in the GPU
+worker process. See [Runtime](../runtime.md).
+
 ## Backend lifecycle endpoints
 
 The controller uses vLLM development endpoints enabled by:
 
 ```text
 VLLM_SERVER_DEV_MODE=1
+VLLM_SLEEP_BACKEND=switch
 --enable-sleep-mode
 ```
 

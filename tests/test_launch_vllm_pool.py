@@ -16,8 +16,8 @@ async def test_post_and_probe_share_one_transition_deadline(monkeypatch):
     async def fake_wait(*_args, **_kwargs):
         await asyncio.sleep(0.04)
 
-    monkeypatch.setattr(launch_vllm_pool, "post", fake_post)
-    monkeypatch.setattr(launch_vllm_pool, "wait_sleep_state", fake_wait)
+    monkeypatch.setattr(launch_vllm_pool.EngineClient, "sleep", fake_post)
+    monkeypatch.setattr(launch_vllm_pool.EngineClient, "wait_until_sleeping", fake_wait)
     with pytest.raises(TimeoutError, match="lifecycle transition timed out"):
         await launch_vllm_pool.post_and_wait(
             "http://a",
@@ -35,6 +35,7 @@ async def test_prepare_pool_sleeps_every_backend_before_waking_startup(tmp_path,
         models={
             "a": SimpleNamespace(
                 backend_url="http://a",
+                engine="vllm",
                 sleep_level=1,
                 launch_command=None,
                 env={},
@@ -43,6 +44,7 @@ async def test_prepare_pool_sleeps_every_backend_before_waking_startup(tmp_path,
             ),
             "b": SimpleNamespace(
                 backend_url="http://b",
+                engine="vllm",
                 sleep_level=1,
                 launch_command=None,
                 env={},
@@ -53,12 +55,12 @@ async def test_prepare_pool_sleeps_every_backend_before_waking_startup(tmp_path,
         controller=SimpleNamespace(startup_awake_model="a", switch_timeout_s=5),
     )
 
-    async def fake_health(url, timeout_s):
+    async def fake_health(url, timeout_s, **kwargs):
         events.append(f"health:{url[-1]}")
 
     transitions = []
 
-    async def fake_post_and_wait(url, path, *, expected, timeout_s=600, params=None):
+    async def fake_post_and_wait(url, path, *, expected, timeout_s=600, params=None, **kwargs):
         transitions.append((url, path, params))
         events.append(f"post:{url[-1]}:{path}")
         events.append(f"probe:{url[-1]}:{expected}")
@@ -112,6 +114,7 @@ async def test_prepare_pool_cleans_up_started_processes_on_failure(tmp_path, mon
         models={
             "a": SimpleNamespace(
                 backend_url="http://a",
+                engine="vllm",
                 sleep_level=1,
                 launch_command=["server-a"],
                 env={},
@@ -120,6 +123,7 @@ async def test_prepare_pool_cleans_up_started_processes_on_failure(tmp_path, mon
             ),
             "b": SimpleNamespace(
                 backend_url="http://b",
+                engine="vllm",
                 sleep_level=1,
                 launch_command=["server-b"],
                 env={},
@@ -130,7 +134,7 @@ async def test_prepare_pool_cleans_up_started_processes_on_failure(tmp_path, mon
         controller=SimpleNamespace(startup_awake_model="a", switch_timeout_s=5),
     )
 
-    async def fake_health(url, timeout_s):
+    async def fake_health(url, timeout_s, **kwargs):
         if url == "http://b":
             raise TimeoutError("boom")
 
@@ -177,6 +181,7 @@ async def test_prepare_pool_invalidates_stale_success_pid_file_before_failure(
                 env={},
                 cwd=None,
                 backend_url="http://a",
+                engine="vllm",
                 sleep_level=1,
                 wake_tags=None,
             )
@@ -184,7 +189,7 @@ async def test_prepare_pool_invalidates_stale_success_pid_file_before_failure(
         controller=SimpleNamespace(startup_awake_model="a", switch_timeout_s=5),
     )
 
-    async def fail_health(_url, timeout_s):
+    async def fail_health(_url, timeout_s, **kwargs):
         raise TimeoutError("boom")
 
     monkeypatch.setattr(launch_vllm_pool, "wait_health", fail_health)

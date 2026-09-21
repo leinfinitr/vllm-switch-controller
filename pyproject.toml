@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "vllm-switch-controller"
 version = "0.1.0"
-description = "External model-switching control plane for vllm-switch"
+description = "Inference switching control plane and process-local backup runtime"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -45,6 +45,9 @@ vllm-switch-launch = "scripts.launch_vllm_pool:main"
 vllm-switch-smoke = "scripts.smoke_openai_switch:main"
 vllm-switch-stop = "scripts.stop_vllm_pool:main"
 
+[project.entry-points."vllm.general_plugins"]
+switch_runtime = "switch_runtime.adapters.vllm:register"
+
 [dependency-groups]
 dev = [
     "build>=1.2.2,<2",
@@ -57,7 +60,21 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["vllm_switch_controller", "scripts"]
+packages = ["vllm_switch_controller", "switch_runtime", "scripts"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/vllm_switch_controller",
+    "/switch_runtime",
+    "/scripts",
+    "/tests",
+    "/docs",
+    "/configs/*.example.yaml",
+    "/pyproject.toml",
+    "/uv.lock",
+    "/README.md",
+    "/LICENSE",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

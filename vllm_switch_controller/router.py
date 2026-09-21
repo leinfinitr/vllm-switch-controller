@@ -11,6 +11,11 @@ from fastapi.responses import Response, StreamingResponse
 
 from vllm_switch_controller.backup_pool import BackupPoolState
 from vllm_switch_controller.config import ControllerConfig
+from vllm_switch_controller.engine_client import (
+    EngineClient,
+    EngineControlError,
+    filter_end_to_end_headers,
+)
 from vllm_switch_controller.memory_pressure import MemoryPressureMonitor
 from vllm_switch_controller.metrics import RequestMetrics
 from vllm_switch_controller.policies import SwitchingPolicy
@@ -24,11 +29,6 @@ from vllm_switch_controller.schemas import (
     OpenAIModelsResponse,
 )
 from vllm_switch_controller.state import ControllerState, ModelState, UnknownModelError
-from vllm_switch_controller.vllm_client import (
-    VLLMClient,
-    VLLMClientError,
-    filter_end_to_end_headers,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def make_router(
     config: ControllerConfig,
     state: ControllerState,
     policy: SwitchingPolicy,
-    vllm_client: VLLMClient,
+    vllm_client: EngineClient,
     metrics_recorder,
     backup_pool: BackupPoolState | None = None,
     memory_pressure: MemoryPressureMonitor | None = None,
@@ -315,7 +315,7 @@ def make_router(
             metrics.status_code = 404
             record_metrics_best_effort(metrics)
             raise HTTPException(status_code=404, detail=f"unknown model: {target_model}") from exc
-        except VLLMClientError as exc:
+        except EngineControlError as exc:
             metrics.error = str(exc)
             metrics.status_code = 502
             record_metrics_best_effort(metrics)
@@ -337,7 +337,7 @@ def make_router(
         def remaining_switch_s() -> float:
             remaining = switch_deadline - time.perf_counter()
             if remaining <= 0:
-                raise VLLMClientError("model switch exceeded the configured end-to-end timeout")
+                raise EngineControlError("model switch exceeded the configured end-to-end timeout")
             return remaining
 
         async def observe_sleeping(model: str) -> bool:
@@ -358,7 +358,7 @@ def make_router(
                     pass
 
             task.add_done_callback(consume_probe_result)
-            raise VLLMClientError("model switch exceeded the configured end-to-end timeout")
+            raise EngineControlError("model switch exceeded the configured end-to-end timeout")
 
         # The configured startup state is a desired launcher contract, not a
         # backend observation. Reconcile the full configured pool before the
@@ -375,7 +375,7 @@ def make_router(
             if len(observed_awake) > 1:
                 for model in observed_awake:
                     state.mark_error(model)
-                raise VLLMClientError(
+                raise EngineControlError(
                     "multiple awake backends observed during startup reconciliation: "
                     + ", ".join(observed_awake)
                 )
@@ -403,7 +403,7 @@ def make_router(
             if len(observed_awake) > 1:
                 for model in observed_awake:
                     state.mark_error(model)
-                raise VLLMClientError(
+                raise EngineControlError(
                     "multiple awake backends observed during lifecycle reconciliation: "
                     + ", ".join(observed_awake)
                 )
@@ -422,7 +422,7 @@ def make_router(
                 async with asyncio.timeout(remaining_switch_s()):
                     await state.wait_for_other_model_requests_to_finish(target_model)
             except TimeoutError as exc:
-                raise VLLMClientError(
+                raise EngineControlError(
                     "timed out draining active requests before model switch"
                 ) from exc
             metrics.request_drain_ms = (time.perf_counter() - drain_start) * 1000
@@ -447,7 +447,7 @@ def make_router(
                         metrics.sleep_latency_ms = sleep_total * 1000
                     state.mark_error(model)
                     if isinstance(exc, TimeoutError):
-                        raise VLLMClientError(
+                        raise EngineControlError(
                             "model switch exceeded the configured end-to-end timeout"
                         ) from exc
                     raise
@@ -470,7 +470,7 @@ def make_router(
                         metrics.wake_latency_ms = wake_total * 1000
                     state.mark_error(decision.wake_model)
                     if isinstance(exc, TimeoutError):
-                        raise VLLMClientError(
+                        raise EngineControlError(
                             "model switch exceeded the configured end-to-end timeout"
                         ) from exc
                     raise

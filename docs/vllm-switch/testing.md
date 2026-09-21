@@ -1,56 +1,50 @@
-# vllm-switch Testing
+# vllm-switch testing
 
-Each engine change must revalidate:
+## Engine-independent tests
 
-- CuMem allocator tag and sleep semantics;
-- worker initialization order and CUDA graph readiness;
-- supported model mutation, reload, and EPLB paths;
-- management endpoint query parameters and post-conditions;
-- coordinator wire schema;
-- exact disk manifest and failure fencing;
-- CPU RSS and GPU inference correctness after reclaim and restore.
+From this repository, run the fast verification commands in [Runtime](../runtime.md).
+The fake memory backend exercises actual byte copying and simulated unmap without vLLM,
+PyTorch, or CUDA. Tests cover publication, leases, immutable reuse, mutable buffers,
+reclaim concurrency, allocation identity, disk corruption, protocol retry/ordering, and
+reconstruction guards. A second fake engine control adapter exercises shared deadlines
+without vLLM management endpoints.
 
-## CPU-focused tests
+## Engine bridge and GPU tests
 
-Run from the companion `vllm-switch` environment:
+Install this package in the engine environment, then run from the engine checkout:
 
 ```bash
 .venv/bin/python -m pytest -q \
-  tests/basic_correctness/test_cpu_backup_coordinator.py \
-  tests/basic_correctness/test_cumem.py \
-  tests/basic_correctness/test_exact_disk_backup.py \
   tests/v1/executor/test_sleep_cpu_backup.py \
   tests/v1/worker/test_weight_backup_lifecycle.py \
-  tests/v1/worker/test_eplb_cpu_backup.py
+  tests/basic_correctness/test_exact_disk_backup_gpu.py
 ```
 
-Record Python, PyTorch, CUDA, the engine commit, and complete output.
+The GPU test validates exact disk demotion/restoration and CUDA graph address reuse.
+Record Python, PyTorch, CUDA, both repository commits and dirty state, and full output.
 
-## GPU validation
+Additional dedicated-runner validation should exercise:
 
-A GPU validation run should additionally exercise:
+1. default engine initialization and production graph configuration;
+2. L1 snapshot reuse, accounting separately for mutable buffer copies;
+3. inference output equality after repeated and staged wake;
+4. L2 original-checkpoint reconstruction before inference and fresh snapshots;
+5. logical reclaim acknowledgement and independent worker RSS/host-memory evidence;
+6. exact disk write/reclaim/restore, corruption, and copy-fencing failures;
+7. two-backend request-driven switching through the controller;
+8. provider-disabled native allocator behavior.
 
-1. default CUDA-graph or supported production engine initialization;
-2. first level-1 sleep using eager prebackup with zero weight D2H;
-3. wake followed by output-equality inference;
-4. staged `weights` then `kv_cache` wake when that mode is claimed;
-5. repeated same-process sleep/wake demonstrating clean backup reuse;
-6. controlled reclaim with logical acknowledgement, RSS drop, and `MemAvailable` recovery;
-7. post-reclaim sleep rebuilding CPU backup and returning to reuse;
-8. exact disk spill, reclaim, and restore with checksum verification;
-9. corrupt or missing exact disk data failing closed;
-10. two-model request-driven switching through the controller.
-
-GPU checks belong on a dedicated runner or in a recorded validation workflow, not in the
-controller's hardware-free unit CI.
+Benchmark adapters, evidence, and performance comparisons live in `vllm-switch-bench`.
+CPU tests and smoke runs do not establish broad model, multi-rank, or production support.
 
 ## Integration failures
 
-| Symptom | Likely mismatch |
+| Symptom | Likely cause |
 |---|---|
-| Coordinator `422` | Protocol version or capabilities are absent or different. |
-| Unknown exact-disk variable | Engine does not implement the canonical `VLLM_EXACT_DISK_BACKUP_*` contract. |
-| `/is_sleeping` missing or non-boolean | Wrong management API or development mode disabled. |
-| Partial wake fails inference | Configured tags do not restore all required allocations. |
-| Usage accepted but no physical reclaim | Host-cache flush failed or no bytes were reclaimable. |
-| Snapshot reused after an out-of-tree mutation | Mutation path did not invalidate the weights tag. |
+| Provider unavailable | Wheel missing in engine environment or plugin omitted from allowlist |
+| Provider API mismatch | Engine bridge and runtime use different local interface versions |
+| Coordinator `422` | Missing/incompatible protocol version or capabilities |
+| Model mutation rejected | Operation violates the fixed-weight inference contract |
+| Snapshot blocked after L2 | Checkpoint reconstruction has not completed |
+| Logical release without RSS reduction | Host-cache flush unavailable/failed or allocator retained memory |
+| Disk corruption or partial restore | Recovery-required state; restart the engine |

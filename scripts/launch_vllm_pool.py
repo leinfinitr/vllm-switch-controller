@@ -4,63 +4,26 @@ import json
 import os
 import signal
 import subprocess
-import time
 from pathlib import Path
 from typing import Any
 
-import httpx
-
-from vllm_switch_controller.config import load_config
+from vllm_switch_controller.config import ModelSpec, load_config
+from vllm_switch_controller.engine_client import EngineClient, EngineControlError
 from vllm_switch_controller.processes import read_process_identity, wait_process_group_empty
 
 
-async def wait_health(url: str, timeout_s: float = 600) -> None:
-    deadline = time.time() + timeout_s
-    async with httpx.AsyncClient(timeout=10, trust_env=False) as client:
-        while time.time() < deadline:
-            try:
-                response = await client.get(f"{url}/health")
-                if 200 <= response.status_code < 300:
-                    return
-            except httpx.HTTPError:
-                pass
-            await asyncio.sleep(1)
-    raise TimeoutError(f"backend did not become healthy: {url}")
-
-
-async def post(
-    url: str,
-    path: str,
-    params: Any = None,
-    timeout_s: float = 600,
-) -> None:
-    async with httpx.AsyncClient(timeout=timeout_s, trust_env=False) as client:
-        response = await client.post(f"{url}{path}", params=params)
-        response.raise_for_status()
-
-
-async def wait_sleep_state(
-    url: str,
-    expected: bool,
-    timeout_s: float = 600,
-    poll_interval_s: float = 0.1,
-) -> None:
-    deadline = time.monotonic() + timeout_s
-    async with httpx.AsyncClient(timeout=min(timeout_s, 30), trust_env=False) as client:
-        while time.monotonic() < deadline:
-            try:
-                response = await client.get(f"{url}/is_sleeping")
-                response.raise_for_status()
-                value = response.json().get("is_sleeping")
-                if not isinstance(value, bool):
-                    raise RuntimeError(f"invalid /is_sleeping response from {url}")
-                if value is expected:
-                    return
-            except httpx.HTTPError:
-                pass
-            await asyncio.sleep(poll_interval_s)
-    state = "sleeping" if expected else "awake"
-    raise TimeoutError(f"backend did not become {state}: {url}")
+async def wait_health(url: str, timeout_s: float = 600, *, engine: str = "vllm") -> None:
+    client = EngineClient(
+        {"backend": ModelSpec(backend_url=url, served_model_name="backend", engine=engine)}
+    )
+    try:
+        async with asyncio.timeout(timeout_s):
+            while not await client.health("backend"):
+                await asyncio.sleep(1)
+    except TimeoutError as exc:
+        raise TimeoutError(f"backend did not become healthy: {url}") from exc
+    finally:
+        await client.aclose()
 
 
 async def post_and_wait(
@@ -70,14 +33,28 @@ async def post_and_wait(
     expected: bool,
     timeout_s: float,
     params: Any = None,
+    sleep_level: int = 1,
+    engine: str = "vllm",
 ) -> None:
-    """Apply one lifecycle operation and verify its state under one deadline."""
+    """Use the same engine adapter and transition deadline as request routing."""
+    spec = ModelSpec(
+        backend_url=url, served_model_name="backend", engine=engine, sleep_level=sleep_level
+    )
+    client = EngineClient({"backend": spec}, switch_timeout_s=timeout_s)
     try:
-        async with asyncio.timeout(timeout_s):
-            await post(url, path, params, timeout_s=timeout_s)
-            await wait_sleep_state(url, expected, timeout_s=timeout_s)
-    except TimeoutError as exc:
-        raise TimeoutError(f"lifecycle transition timed out: {url}{path}") from exc
+        if path == "/sleep" and expected:
+            await client.sleep_and_wait("backend", params["level"])
+        elif path == "/wake_up" and not expected:
+            tags = [value for key, value in params if key == "tags"] if params else None
+            await client.wake_up_and_wait("backend", tags)
+        else:
+            raise ValueError("unsupported launcher lifecycle transition")
+    except EngineControlError as exc:
+        if "timed out" in str(exc):
+            raise TimeoutError(f"lifecycle transition timed out: {url}{path}") from exc
+        raise
+    finally:
+        await client.aclose()
 
 
 async def prepare_pool(config, *, pid_file: str | Path, skip_launch: bool) -> None:
@@ -114,12 +91,15 @@ async def prepare_pool(config, *, pid_file: str | Path, skip_launch: bool) -> No
                 print(f"launched {name} pid={process.pid}")
             else:
                 print(f"using existing backend for {name}: {spec.backend_url}")
-            await wait_health(spec.backend_url, timeout_s=config.controller.switch_timeout_s)
+            await wait_health(
+                spec.backend_url, timeout_s=config.controller.switch_timeout_s, engine=spec.engine
+            )
             print(f"sleeping {name}")
             await post_and_wait(
                 spec.backend_url,
                 "/sleep",
                 params={"level": spec.sleep_level},
+                engine=spec.engine,
                 expected=True,
                 timeout_s=config.controller.switch_timeout_s,
             )
@@ -133,6 +113,8 @@ async def prepare_pool(config, *, pid_file: str | Path, skip_launch: bool) -> No
                 config.models[startup].backend_url,
                 "/wake_up",
                 params=wake_params,
+                sleep_level=config.models[startup].sleep_level,
+                engine=config.models[startup].engine,
                 expected=False,
                 timeout_s=config.controller.switch_timeout_s,
             )

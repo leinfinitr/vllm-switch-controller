@@ -7,7 +7,7 @@ owns request-driven model selection, lifecycle serialization, OpenAI-compatible 
 aggregate CPU backup accounting, and host-memory pressure policy.
 
 It does not execute models or own CPU/GPU backup contents. Those responsibilities stay
-inside `vllm-switch` so that tensor validity and copy synchronization cannot diverge across a
+inside each engine worker through `switch_runtime`, so backup publication and copy synchronization stay on the same side of the
 network boundary.
 
 ```text
@@ -26,7 +26,7 @@ vllm-switch worker <-- cumulative target_free_bytes -------- controller
   management plane.
 - `vllm_switch_controller/state.py` owns lifecycle state, active-request reservations, draining,
   and the global switch lock.
-- `vllm_switch_controller/vllm_client.py` calls backend health and lifecycle endpoints and proxies
+- `vllm_switch_controller/engine_client.py` uses engine adapters for health and lifecycle endpoints and proxies
   inference traffic. Explicit backend traffic does not inherit environment proxies.
 - `vllm_switch_controller/policies.py` decides which model to sleep or wake for a target alias.
 - `vllm_switch_controller/metrics.py` records per-request queue, switch, transport first-byte, and
@@ -119,7 +119,7 @@ their upstream context open for the full downstream lifetime.
 
 ## CPU Backup Boundary
 
-The `vllm-switch` allocator owns pinned tensors, validity, D2H/H2D, in-flight copy protection, and
+The process-local `switch_runtime` owns pinned buffers, publication, D2H/H2D, in-flight copy protection, and
 the concrete release order. The controller receives aggregate usage and issues
 cumulative byte targets only.
 
@@ -162,12 +162,13 @@ fails closed if a numeric PID/PGID was reused.
 
 ```text
 vllm-switch/
-  allocator-local backup state, eager snapshots, version invalidation,
-  sleep transactions, physical reclamation, coordinator client
+  allocator notifications, lifecycle guards, provider registry,
+  collective prepare/commit/abort entry points
 
 vllm-switch-controller/
   multi-backend lifecycle, request drain, OpenAI proxy,
-  aggregate accounting, host-pressure policy
+  aggregate accounting, host-pressure policy;
+  switch_runtime library loaded inside engine workers
 
 vllm-switch-bench/
   benchmark adapters, raw and curated evidence, plots, reports
@@ -184,3 +185,10 @@ repository does not duplicate allocator correctness logic.
 - There is no replica selection, multi-GPU placement, admission control, or preemption.
 - OpenAI Responses, Assistants, Batch, and other stateful APIs are not proxied.
 - Host pressure is read from host-global `/proc/meminfo`, not cgroup or NUMA signals.
+
+## In-process runtime
+
+See [Runtime](runtime.md) for memory contracts and engine adapters. Controller HTTP carries
+metadata only. Each worker constructs its own runtime after device initialization; plugin
+registration in API/core processes allocates no CUDA state. L2 resume includes checkpoint
+reconstruction before the controller declares a backend ready.

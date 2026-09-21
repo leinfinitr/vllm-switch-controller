@@ -17,6 +17,7 @@ class ModelSpec(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     backend_url: str
+    engine: str = "vllm"
     served_model_name: str
     sleep_level: int = Field(default=1, ge=1, le=2)
     wake_tags: list[str] | None = None

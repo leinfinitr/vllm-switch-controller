@@ -93,3 +93,10 @@ safe to release. See [CPU Backup Coordinator](cpu_backup_coordinator.md).
   `configs/*.local.yaml` files.
 - Put transient metrics under ignored `results/` or `tmp/` paths.
 - Put benchmark configurations and evidence in `vllm-switch-bench`, not this repository.
+
+## Engine adapter
+
+Each model accepts `engine: vllm` (the default). The shared client selects an
+`EngineControlAdapter`; applications may inject additional adapters when constructing
+`EngineClient`. The packaged CLI currently supplies the vLLM adapter. L2 resume restores
+weights from the original checkpoint before KV wake and readiness verification.

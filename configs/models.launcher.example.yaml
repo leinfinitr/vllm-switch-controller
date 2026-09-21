@@ -14,6 +14,7 @@ models:
       # PYTHONPATH: /path/to/vllm-switch-checkout
       # Environment variables for the vLLM server.
       VLLM_SERVER_DEV_MODE: "1"
+      VLLM_SLEEP_BACKEND: switch
       VLLM_CPU_BACKUP_COORDINATOR: http
       VLLM_CPU_BACKUP_COORDINATOR_URL: http://127.0.0.1:9000
       VLLM_CPU_BACKUP_COORDINATOR_MODEL_ID: model-a
@@ -58,6 +59,7 @@ models:
       # PATH: /path/to/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       # PYTHONPATH: /path/to/vllm-switch-checkout
       VLLM_SERVER_DEV_MODE: "1"
+      VLLM_SLEEP_BACKEND: switch
       VLLM_CPU_BACKUP_COORDINATOR: http
       VLLM_CPU_BACKUP_COORDINATOR_URL: http://127.0.0.1:9000
       VLLM_CPU_BACKUP_COORDINATOR_MODEL_ID: model-b

@@ -1,12 +1,12 @@
 # CPU Backup Coordinator
 
 The controller coordinates aggregate usage of process-local pinned CPU backups and
-applies a host-memory pressure policy. `vllm-switch` always owns the data plane and correctness
+applies a host-memory pressure policy. `switch_runtime` inside each engine worker owns the data plane and correctness
 state; the controller issues byte targets only.
 
 ## Responsibility Boundary
 
-| vllm-switch worker | Controller |
+| In-process runtime | Controller service |
 |---|---|
 | Owns pinned tensors | Never receives tensors or backup IDs |
 | Performs D2H and H2D copies | Aggregates per-process and per-model bytes |

@@ -3,8 +3,9 @@
 [![CI](https://github.com/leinfinitr/vllm-switch-controller/actions/workflows/ci.yml/badge.svg)](https://github.com/leinfinitr/vllm-switch-controller/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-An experimental external control plane that routes OpenAI-compatible requests across
-long-lived, single-model vLLM backends and serializes their sleep/wake lifecycle.
+An experimental inference switching system with an external control plane and a
+process-local backup runtime. It routes OpenAI-compatible requests across long-lived
+model backends and serializes their sleep/wake lifecycle.
 
 > [!WARNING]
 > The controller has no authentication, authorization, or TLS. Its data and management
@@ -37,8 +38,10 @@ vllm-switch is useful for:
 - Using idle CPU memory for backup storage and reclaiming it when needed.
 - Using direct I/O for exact disk snapshots and recovery.
 
-The companion [vllm-switch](https://github.com/leinfinitr/vllm-switch) owns pinned CPU
-backups, eager prebackup, D2H/H2D, validity, concrete reclaim, and exact disk snapshots.
+This repository ships `switch_runtime`: pinned CPU pooling, eager snapshots, D2H/H2D,
+backup publication, concrete reclaim, and exact disk snapshots. The library runs inside
+each GPU worker through the companion [vllm-switch](https://github.com/leinfinitr/vllm-switch)
+provider interfaces. The controller service only receives aggregate metadata.
 The [vllm-switch-bench](https://github.com/leinfinitr/vllm-switch-bench) repository owns
 cross-system experiments, results and plots.
 
@@ -68,6 +71,18 @@ Or install a built wheel:
 uv build
 uv tool install dist/*.whl
 ```
+
+For the optimized worker path, also install this package into the engine environment:
+
+```bash
+uv pip install --python /path/to/engine/.venv/bin/python /path/to/vllm-switch-controller
+export VLLM_SLEEP_BACKEND=switch
+```
+
+The wheel does not install PyTorch or vLLM. It uses the engine's CUDA/PyTorch environment.
+Keep `switch_runtime` enabled in `VLLM_PLUGINS` if a plugin allowlist is configured.
+The native sleep path remains the default. See [Runtime](docs/runtime.md) for fixed-weight
+inference restrictions, engine interfaces, L2 reconstruction, and validation.
 
 ## Quick start
 

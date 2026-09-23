@@ -134,13 +134,16 @@ unrelated process.
 
 ## Documentation
 
+- [Documentation index](docs/README.md)
 - [Getting started](docs/getting-started.md)
 - [Configuration](docs/configuration.md)
 - [Operations and troubleshooting](docs/operations.md)
 - [API reference](docs/api.md)
 - [Architecture and safety invariants](docs/architecture.md)
 - [CPU backup coordinator protocol](docs/cpu_backup_coordinator.md)
+- [Process-local runtime and design guides](docs/runtime.md)
 - [vllm-switch integration](docs/vllm-switch/README.md)
+- [vLLM v0.22.1 delta and runtime call chains](docs/vllm-switch/delta-v0.22.1.md)
 - [Compatibility matrix](docs/compatibility.md)
 
 ## Development

@@ -3,6 +3,8 @@
 The controller coordinates aggregate usage of process-local pinned CPU backups and
 applies a host-memory pressure policy. `switch_runtime` inside each engine worker owns the data plane and correctness
 state; the controller issues byte targets only.
+See the [worker pool design](runtime/pinned_cpu_backup_pool.md) for concrete storage
+ownership and [engine integration](vllm-switch/integration.md) for runtime configuration.
 
 ## Responsibility Boundary
 

@@ -10,6 +10,21 @@ and disk staging storage remain in the process that owns the model. Optional HTT
 aggregate usage, cumulative release targets, and acknowledgements only. The controller
 service does not import PyTorch or require a GPU.
 
+## Design guides
+
+This page defines the shared contracts and adapter responsibilities. Detailed mechanisms
+are maintained alongside it:
+
+- [CPU backup architecture](runtime/cpu_weight_backup.md): ownership and invariants.
+- [Fixed-weight lifecycle](runtime/eager_cpu_weight_backup.md): readiness, reuse, and L2.
+- [Pinned CPU pool](runtime/pinned_cpu_backup_pool.md): storage lifetime and reclaim.
+- [Exact disk backup](runtime/exact_disk_backup.md): publication, validation, and restore.
+
+For engine functions and their runtime counterparts, see the
+[vLLM v0.22.1 delta](vllm-switch/delta-v0.22.1.md). Environment defaults live in the
+[integration guide](vllm-switch/integration.md#canonical-environment-variables), and HTTP
+accounting is specified in the [coordinator protocol](cpu_backup_coordinator.md).
+
 ## Installation and selection
 
 Install this wheel into the engine's existing Python environment as well as the controller

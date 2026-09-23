@@ -27,6 +27,7 @@ from vllm_switch_controller.schemas import (
     BackupUsageRequest,
     OpenAIModel,
     OpenAIModelsResponse,
+    PrewarmRequest,
 )
 from vllm_switch_controller.state import ControllerState, ModelState, UnknownModelError
 
@@ -93,6 +94,9 @@ def make_router(
 ) -> APIRouter:
     router = APIRouter()
     backup_pool = backup_pool or BackupPoolState()
+    # Entries live only for their original TTL; a full cache rejects new hints.
+    # Never evict an in-flight transaction to make room for advisory work.
+    hints: dict[str, tuple[PrewarmRequest, float, asyncio.Task[dict[str, Any]]]] = {}
 
     def record_metrics_best_effort(metrics: RequestMetrics) -> None:
         try:
@@ -207,6 +211,85 @@ def make_router(
         record_metrics_best_effort(metrics)
         return {"active_model": state.active_model, "states": state.model_states}
 
+    @router.post("/admin/prewarm")
+    async def prewarm(body: PrewarmRequest) -> dict[str, Any]:
+        received = time.perf_counter()
+        if body.model not in state.model_states:
+            raise HTTPException(status_code=404, detail=f"unknown model: {body.model}")
+        for key, (_, expiry, task) in list(hints.items()):
+            if expiry <= received and task.done():
+                del hints[key]
+        existing = hints.get(body.hint_id)
+        if existing is not None:
+            original, _, task = existing
+            if original != body:
+                raise HTTPException(
+                    status_code=409, detail="hint_id already has different contents"
+                )
+            cancellation = await wait_task_resisting_cancellation(task)
+            result = task.result()
+            if cancellation is not None:
+                raise cancellation
+            return {**result, "duplicate": True}
+
+        metrics = RequestMetrics.new(model=body.model, path="/admin/prewarm")
+        metrics.task_id = body.task_id
+        metrics.stage_id = body.stage_id
+        metrics.hint_id = body.hint_id
+        metrics.hint_source = body.source
+
+        def finish(status: str, reason: str | None = None) -> dict[str, Any]:
+            metrics.hint_status = status
+            metrics.hint_reason = reason
+            metrics.e2e_latency_ms = (time.perf_counter() - received) * 1000
+            metrics.status_code = 200
+            record_metrics_best_effort(metrics)
+            return {
+                "status": status,
+                "reason": reason,
+                "hint_id": body.hint_id,
+                "model": body.model,
+                "active_model": state.active_model,
+                "elapsed_ms": metrics.e2e_latency_ms,
+                "switch_id": metrics.switch_id,
+                "duplicate": False,
+            }
+
+        expiry = received + body.ttl_ms / 1000
+
+        async def execute() -> dict[str, Any]:
+            # An unlocked asyncio.Lock is acquired without yielding. Recheck
+            # demand and reservations inside it before starting any lifecycle IO.
+            if state.switch_lock.locked() or state.pending_demands:
+                return finish("ignored", "busy")
+            async with state.switch_lock:
+                active = await state.active_requests_snapshot()
+                if state.pending_demands or any(active.values()):
+                    return finish("ignored", "busy")
+                if time.perf_counter() >= expiry:
+                    return finish("ignored", "expired")
+                if memory_pressure is not None and memory_pressure.enabled:
+                    if memory_pressure.state != "normal" or memory_pressure.last_error:
+                        return finish("ignored", "memory_pressure")
+                try:
+                    await ensure_model_ready_locked(body.model, metrics)
+                except Exception as exc:
+                    metrics.error = f"{type(exc).__name__}: {exc}"
+                    return finish("failed", "lifecycle_error")
+                return finish("ready")
+
+        if len(hints) >= 1024:
+            return finish("ignored", "capacity")
+        task = asyncio.create_task(execute())
+        hints[body.hint_id] = (body, expiry, task)
+        # Caller cancellation must not release switch_lock while a mutating
+        # sleep/wake request can still finish remotely.
+        cancellation = await wait_task_resisting_cancellation(task)
+        result = task.result()
+        if cancellation is not None:
+            raise cancellation
+        return result
+
     @router.get("/v1/models")
     async def list_models() -> OpenAIModelsResponse:
         return OpenAIModelsResponse(data=[OpenAIModel(id=name) for name in config.models])
@@ -253,7 +336,9 @@ def make_router(
             # competing model request can begin sleeping this backend in the
             # gap between readiness and track_request().
             queue_started = time.perf_counter()
-            async with state.switch_lock:
+            with state.demand():
+                await state.switch_lock.acquire()
+            try:
                 metrics.queue_wait_ms = (time.perf_counter() - queue_started) * 1000
                 await ensure_model_ready_locked(target_model, metrics)
                 request_tracker = state.track_request(target_model)
@@ -270,6 +355,8 @@ def make_router(
                 if enter_cancellation is not None:
                     await tracker_cleanup()
                     raise enter_cancellation
+            finally:
+                state.switch_lock.release()
             backend_start = time.perf_counter()
             if body.get("stream") is True:
                 # Transfer ownership before awaiting stream setup. This avoids
@@ -326,8 +413,12 @@ def make_router(
 
     async def ensure_model_ready(target_model: str, metrics: RequestMetrics) -> None:
         state.require_model(target_model)
-        async with state.switch_lock:
+        with state.demand():
+            await state.switch_lock.acquire()
+        try:
             await ensure_model_ready_locked(target_model, metrics)
+        finally:
+            state.switch_lock.release()
 
     async def ensure_model_ready_locked(target_model: str, metrics: RequestMetrics) -> None:
         """Transition models while the caller holds state.switch_lock."""

@@ -56,6 +56,19 @@ class OpenAIModelsResponse(BaseModel):
     data: list[OpenAIModel]
 
 
+class PrewarmRequest(BaseModel):
+    """A model identity hint; no prompt, inference, or request reservation."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    model: str = Field(min_length=1, max_length=256)
+    task_id: str = Field(min_length=1, max_length=256)
+    stage_id: str = Field(min_length=1, max_length=256)
+    hint_id: str = Field(min_length=1, max_length=256)
+    source: str = Field(min_length=1, max_length=128)
+    ttl_ms: int = Field(ge=0, le=60_000, strict=True)
+
+
 class BackupRegisterRequest(CpuBackupProtocolRequest):
     client_id: str
     pid: int | None = None

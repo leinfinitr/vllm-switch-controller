@@ -1,6 +1,6 @@
 import asyncio
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -26,6 +26,7 @@ class ControllerState:
     model_states: dict[str, ModelState]
     switch_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     startup_reconciled: bool = False
+    pending_demands: int = 0
     _request_condition: asyncio.Condition = field(default_factory=asyncio.Condition)
     _active_requests: dict[str, int] = field(default_factory=dict)
 
@@ -44,6 +45,15 @@ class ControllerState:
     def require_model(self, model: str) -> None:
         if model not in self.model_states:
             raise UnknownModelError(model)
+
+    @contextmanager
+    def demand(self) -> Iterator[None]:
+        """Advertise real requests before they wait for the lifecycle lock."""
+        self.pending_demands += 1
+        try:
+            yield
+        finally:
+            self.pending_demands -= 1
 
     def mark_awake(self, model: str) -> None:
         self.require_model(model)

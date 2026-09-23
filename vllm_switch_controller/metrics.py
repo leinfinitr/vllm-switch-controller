@@ -27,6 +27,12 @@ class RequestMetrics:
     e2e_latency_ms: float | None = None
     status_code: int | None = None
     error: str | None = None
+    task_id: str | None = None
+    stage_id: str | None = None
+    hint_id: str | None = None
+    hint_source: str | None = None
+    hint_status: str | None = None
+    hint_reason: str | None = None
 
     @classmethod
     def new(cls, model: str, path: str, request_id: str | None = None) -> "RequestMetrics":

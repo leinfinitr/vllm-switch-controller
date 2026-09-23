@@ -156,3 +156,35 @@ host-memory pressure state.
 
 See [CPU Backup Coordinator](cpu_backup_coordinator.md) for idempotency, incarnation, and
 physical-reclaim semantics.
+
+## Advance model hints
+
+`POST /admin/prewarm` accepts `model`, `task_id`, `stage_id`, `hint_id`, `source`
+(nonempty strings), and `ttl_ms` (integer, 0–60000). It returns `status` equal to
+`ready`, `ignored` (with `reason`), or `failed`. Unknown models return HTTP 404;
+reusing an unexpired hint ID with different contents returns HTTP 409. A lifecycle
+failure returns `failed` with HTTP 200: clients must inspect `status`.
+
+Submit the hint concurrently with a CPU tool, after the preceding model response
+has completed. The endpoint waits for readiness; it does not generate tokens or
+reserve a future request. The next inference still goes through the OpenAI proxy.
+The application executes its own CPU work, outside the controller process.
+
+Hints are advisory. Active reservations, pending demand, a held lifecycle lock,
+observed host pressure, an expired hint, or a full 1024-entry hint cache cause an
+immediate skip. TTL starts on receipt using the controller's monotonic clock and
+bounds admission, not the duration of a started switch. The configured switch
+timeout bounds that transaction. A caller disconnect does not abort a started
+sleep/wake operation or release its lock early. Real demand takes priority before
+advisory admission; it waits behind a transaction that has already begun.
+
+Concurrent identical hint IDs join one transaction. IDs are retained until their
+original TTL expires and any transaction completes. Use a fresh ID for a new stage;
+a retry returns the original result, not a new readiness observation or a residency
+lease. A different hint for a model already ready performs no additional switch.
+The controller does not predict targets, schedule arbitrary DAGs, or expose a
+background-job API. On a conditional tool branch, the application may abstain.
+
+Controller JSONL metrics include task/stage/hint correlation, source, decision,
+switch ID, and existing sleep/wake/combined timing fields. Failed hints keep the
+existing lifecycle reconciliation and fail-closed behavior.

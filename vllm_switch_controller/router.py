@@ -521,16 +521,47 @@ def make_router(
         sleep_total = 0.0
         wake_total = 0.0
         try:
+            target_residency = None
+            if config.controller.partial_gpu_eviction:
+                if len(config.models) != 2 or any(
+                    spec.sleep_level != 1 or spec.wake_tags is not None
+                    for spec in config.models.values()
+                ):
+                    raise EngineControlError(
+                        "partial GPU eviction requires two full-wake L1 models"
+                    )
+                try:
+                    async with asyncio.timeout(remaining_switch_s()):
+                        target_residency = await vllm_client.gpu_residency(target_model)
+                except TimeoutError as exc:
+                    raise EngineControlError("timed out probing target GPU residency") from exc
             for model in decision.sleep_models:
                 state.mark_sleeping_in_progress(model)
                 try:
                     remaining = remaining_switch_s()
                     async with asyncio.timeout(remaining):
-                        latency, _ = await vllm_client.sleep_and_wait_with_timeout(
-                            model,
-                            config.models[model].sleep_level,
-                            remaining,
-                        )
+                        if target_residency is not None:
+                            previous = await vllm_client.gpu_residency(model)
+                            if previous["device_uuid"] != target_residency["device_uuid"]:
+                                raise EngineControlError(
+                                    "partial switching requires one shared GPU"
+                                )
+                            release_bytes = max(
+                                0,
+                                target_residency["missing_bytes"]
+                                + config.controller.gpu_memory_margin_bytes
+                                - previous["free_device_bytes"],
+                            )
+                            metrics.gpu_release_target_bytes = release_bytes
+                            latency, _ = await vllm_client.sleep_partial_and_wait(
+                                model, release_bytes, remaining_switch_s()
+                            )
+                        else:
+                            latency, _ = await vllm_client.sleep_and_wait_with_timeout(
+                                model,
+                                config.models[model].sleep_level,
+                                remaining,
+                            )
                 except BaseException as exc:
                     completed_latency = getattr(exc, "transition_latency_s", None)
                     if isinstance(completed_latency, (int, float)):
@@ -551,9 +582,25 @@ def make_router(
                 try:
                     remaining = remaining_switch_s()
                     async with asyncio.timeout(remaining):
-                        wake_total, _ = await vllm_client.wake_up_and_wait_with_timeout(
-                            decision.wake_model, spec.wake_tags, remaining
-                        )
+                        if target_residency is not None:
+                            observed = await vllm_client.gpu_residency(decision.wake_model)
+                            metrics.gpu_restore_bytes = observed["missing_bytes"]
+                            if observed["pid"] != target_residency["pid"]:
+                                raise EngineControlError("target worker restarted during switch")
+                            if observed["free_device_bytes"] < (
+                                observed["missing_bytes"]
+                                + config.controller.gpu_memory_margin_bytes
+                            ):
+                                raise EngineControlError(
+                                    "insufficient physical GPU memory after eviction"
+                                )
+                            wake_total, _ = await vllm_client.wake_partial_and_wait(
+                                decision.wake_model, remaining_switch_s()
+                            )
+                        else:
+                            wake_total, _ = await vllm_client.wake_up_and_wait_with_timeout(
+                                decision.wake_model, spec.wake_tags, remaining
+                            )
                 except BaseException as exc:
                     completed_latency = getattr(exc, "transition_latency_s", None)
                     if isinstance(completed_latency, (int, float)):

@@ -188,3 +188,9 @@ background-job API. On a conditional tool branch, the application may abstain.
 Controller JSONL metrics include task/stage/hint correlation, source, decision,
 switch ID, and existing sleep/wake/combined timing fields. Failed hints keep the
 existing lifecycle reconciliation and fail-closed behavior.
+
+With partial GPU eviction enabled, the same request/prewarm transactions use the engine's
+explicit partial-sleep capability. Controller `sleeping` means scheduling is paused; some
+immutable GPU allocations may remain resident. Worker `/gpu_residency` is the authoritative
+physical-allocation observation. Metrics add `gpu_release_target_bytes` and
+`gpu_restore_bytes`; neither is a host-backup reclaim acknowledgement.

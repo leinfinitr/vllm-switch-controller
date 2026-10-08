@@ -19,8 +19,12 @@ class RuntimeConfig:
     poll_interval_s: float = 0.1
     engine: str = "unknown"
     profile_path: Path | None = None
+    async_cpu_restore: bool = False
+    weight_slab_bytes: int = 0
 
     def __post_init__(self) -> None:
+        if not 0 <= self.weight_slab_bytes <= 1024**3 or self.weight_slab_bytes % (2 * 1024**2):
+            raise ValueError("weight_slab_bytes must be a 2 MiB multiple between zero and 1 GiB")
         if self.chunk_bytes <= 0 or self.chunk_bytes % 4096:
             raise ValueError("chunk_bytes must be a positive 4 KiB multiple")
         if not math.isfinite(self.coordinator_timeout_s) or self.coordinator_timeout_s <= 0:

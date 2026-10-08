@@ -83,6 +83,64 @@ class EngineClient:
     async def aclose(self) -> None:
         await self._client.aclose()
 
+    async def gpu_residency(self, model: str) -> dict[str, Any]:
+        if self._spec(model).engine != "vllm":
+            raise EngineControlError("partial GPU eviction requires an adapter capability")
+        response = await self._control_request(model)("GET", "/gpu_residency")
+        require_success(response, "GPU residency")
+        try:
+            data = response.json()
+        except ValueError as exc:
+            raise EngineControlError("invalid GPU residency JSON") from exc
+        if not isinstance(data, dict):
+            raise EngineControlError("GPU residency must be an object")
+        if (
+            data.get("schema_version") != 1
+            or data.get("capability") != "partial-gpu-sleep-v1"
+            or data.get("world_size") != 1
+            or data.get("checkpoint_pending")
+            or data.get("state") not in {"awake", "sleeping"}
+        ):
+            raise EngineControlError("unsupported or unsafe GPU residency response")
+        for key in [
+            "resident_bytes",
+            "missing_bytes",
+            "free_device_bytes",
+            "total_device_bytes",
+            "pid",
+        ]:
+            if type(data.get(key)) is not int or data[key] < 0:
+                raise EngineControlError(f"invalid GPU residency field: {key}")
+        if not data.get("device_uuid"):
+            raise EngineControlError("missing GPU device identity")
+        if data["pid"] == 0 or data["free_device_bytes"] > data["total_device_bytes"]:
+            raise EngineControlError("invalid GPU residency identity or capacity")
+        return data
+
+    async def sleep_partial_and_wait(self, model: str, release_bytes: int, timeout_s: float):
+        async def transition():
+            start = time.perf_counter()
+            response = await self._control_request(model, timeout_s)(
+                "POST", "/sleep_partial", params={"release_bytes": release_bytes}
+            )
+            require_success(response, "partial GPU sleep")
+            return time.perf_counter() - start
+
+        return await self._transition_and_wait(
+            transition, model, expected=True, timeout_s=timeout_s
+        )
+
+    async def wake_partial_and_wait(self, model: str, timeout_s: float):
+        async def transition():
+            start = time.perf_counter()
+            response = await self._control_request(model, timeout_s)("POST", "/wake_partial")
+            require_success(response, "partial GPU wake")
+            return time.perf_counter() - start
+
+        return await self._transition_and_wait(
+            transition, model, expected=False, timeout_s=timeout_s
+        )
+
     def _spec(self, model: str) -> ModelSpec:
         try:
             return self.models[model]

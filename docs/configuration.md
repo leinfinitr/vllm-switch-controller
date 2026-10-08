@@ -100,3 +100,11 @@ Each model accepts `engine: vllm` (the default). The shared client selects an
 `EngineControlAdapter`; applications may inject additional adapters when constructing
 `EngineClient`. The packaged CLI currently supplies the vLLM adapter. L2 resume restores
 weights from the original checkpoint before KV wake and readiness verification.
+
+### Partial GPU eviction
+
+For a two-model, single-GPU L1 pool, set `controller.partial_gpu_eviction: true` and
+optionally `controller.gpu_memory_margin_bytes` (default 268435456). Both model specs must
+use the vLLM adapter, `sleep_level: 1`, and `wake_tags: null`. The engine fork must expose
+partial-GPU-sleep protocol v1. See [runtime optimizations](runtime.md) for worker environment
+flags, rebuilt slab extension requirements, capacity accounting, and failure semantics.

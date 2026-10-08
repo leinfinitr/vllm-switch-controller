@@ -72,6 +72,8 @@ class ControllerSettings(BaseModel):
     startup_awake_model: str | None = None
     request_timeout_s: float = Field(default=600, gt=0)
     switch_timeout_s: float = Field(default=600, gt=0)
+    partial_gpu_eviction: bool = False
+    gpu_memory_margin_bytes: int = Field(default=256 * 1024**2, ge=0)
     metrics_path: str = "results/controller_events.jsonl"
     cpu_backup_global_cap_bytes: int | None = Field(default=None, ge=0)
     cpu_backup_default_model_priority: int = 0
@@ -127,6 +129,14 @@ class ControllerConfig(BaseModel):
             raise ValueError(f"startup_awake_model {startup!r} is not in configured models")
         if not self.models:
             raise ValueError("at least one model must be configured")
+        if self.controller.partial_gpu_eviction and (
+            len(self.models) != 2
+            or any(
+                spec.engine != "vllm" or spec.sleep_level != 1 or spec.wake_tags is not None
+                for spec in self.models.values()
+            )
+        ):
+            raise ValueError("partial GPU eviction requires two vLLM models with full L1 wake")
         return self
 
 

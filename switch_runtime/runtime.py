@@ -66,6 +66,7 @@ class AllocationData:
     cpu_backup_state: CpuBackupState | None = None
     disk_backup_ref: DiskSegmentRef | None = None
     disk_backup_state: DiskBackupState | None = None
+    resident: bool = True
 
     @property
     def tag(self) -> str:
@@ -106,6 +107,7 @@ class BackupRuntime:
         self.residency_state = ResidencyState.AWAKE
         self.sleeping_tags: set[str] = set()
         self.sleeping_exact_restore_tags: set[str] = set()
+        self.partial_sleep = False
         if config.disk_enabled:
             try:
                 self.disk_backup_store = ExactDiskBackupStore(
@@ -772,6 +774,7 @@ class BackupRuntime:
         offload_tags: tuple[str, ...] | str | None = None,
         *,
         skip_prepare: bool = False,
+        release_bytes: int | None = None,
     ) -> None:
         """
         Put the allocator in sleep mode.
@@ -784,6 +787,8 @@ class BackupRuntime:
         offload_tags = self._normalize_tags(offload_tags, default=(BackupRuntime.default_tag,))
 
         assert isinstance(offload_tags, tuple)
+        if release_bytes is not None and (release_bytes < 0 or offload_tags != ("weights",)):
+            raise ValueError("partial eviction requires a nonnegative L1 weight release budget")
 
         # Phase 1: make every required backup current while all GPU mappings are
         # still intact. A D2H failure therefore cannot leave a partially slept
@@ -853,9 +858,38 @@ class BackupRuntime:
         discard_bytes_by_tag: dict[str, int] = {}
 
         unmapped_count = 0
+        victims = set(self.allocations)
+        if release_bytes is not None:
+            # Discard KV first. Keep exact weight regions that the next model
+            # does not need us to release. Whole regions remain the VMM unit.
+            victims = {
+                ptr
+                for ptr, data in self.allocations.items()
+                if data.tag not in offload_tags or data.region.policy == SavePolicy.DISCARD
+            }
+            freed = sum(self.allocations[ptr].region.size_bytes for ptr in victims)
+            candidates = [data for ptr, data in self.allocations.items() if ptr not in victims]
+            while freed < release_bytes and candidates:
+                remaining = release_bytes - freed
+                fitting = [data for data in candidates if data.region.size_bytes <= remaining]
+                chosen = (
+                    max(fitting, key=lambda d: d.region.size_bytes)
+                    if fitting
+                    else min(candidates, key=lambda d: d.region.size_bytes)
+                )
+                candidates.remove(chosen)
+                victims.add(chosen.region.address)
+                freed += chosen.region.size_bytes
         try:
             for data in self.allocations.values():
                 handle = data.region
+                if handle.address not in victims:
+                    with self.cpu_backup_lock:
+                        if data.cpu_backup_state == CpuBackupState.REQUIRED_FOR_RESTORE:
+                            data.cpu_backup_state = CpuBackupState.CACHE_ONLY
+                        if data.disk_backup_state == DiskBackupState.REQUIRED_FOR_RESTORE:
+                            data.disk_backup_state = DiskBackupState.CACHE_ONLY
+                    continue
                 total_bytes += handle.size_bytes
 
                 if profile:
@@ -889,6 +923,7 @@ class BackupRuntime:
                     )
                 unmap_started_at = time.perf_counter()
                 self.backend.unmap(handle)
+                data.resident = False
                 unmapped_count += 1
                 unmap_release_s += time.perf_counter() - unmap_started_at
         except BaseException:
@@ -898,6 +933,7 @@ class BackupRuntime:
             raise
         with self.cpu_backup_lock:
             self.residency_state = ResidencyState.SLEEPING
+            self.partial_sleep = release_bytes is not None
             self.sleeping_tags = {data.tag for data in self.allocations.values()}
             self.sleeping_exact_restore_tags = set(offload_tags)
 
@@ -926,6 +962,11 @@ class BackupRuntime:
                 "allocator_sleep",
                 offload_tags=list(offload_tags),
                 allocation_count=len(self.allocations),
+                evicted_allocation_count=unmapped_count,
+                requested_release_bytes=release_bytes,
+                retained_gpu_bytes=sum(
+                    d.region.size_bytes for d in self.allocations.values() if d.resident
+                ),
                 total_bytes=total_bytes,
                 backup_bytes=backup_bytes,
                 discard_bytes=total_bytes - backup_bytes,
@@ -974,6 +1015,12 @@ class BackupRuntime:
         disk_create_map_s = 0.0
         deferred_create_map_s = 0.0
         copy_h2d_s = 0.0
+        async_stream = None
+        async_restored: list[AllocationData] = []
+        copy_enqueue_s = 0.0
+        copy_wait_s = 0.0
+        async_started_at: float | None = None
+        cpu_restore_pipeline_s = 0.0
         bytes_by_tag: dict[str, int] = {}
         cpu_restored_bytes_by_tag: dict[str, int] = {}
         disk_restored_bytes_by_tag: dict[str, int] = {}
@@ -1003,6 +1050,7 @@ class BackupRuntime:
                 ptr
                 for ptr, data in self.allocations.items()
                 if data.tag in selected_tags
+                and not data.resident
                 and data.tag in self.sleeping_exact_restore_tags
                 and data.region.policy != SavePolicy.DISCARD
                 and not self._cpu_backup_is_current(data)
@@ -1017,6 +1065,7 @@ class BackupRuntime:
                 data.disk_backup_ref
                 for data in self.allocations.values()
                 if data.tag in selected_tags
+                and not data.resident
                 and data.cpu_backup_buffer is None
                 and self._disk_backup_is_current(data)
                 and data.disk_backup_ref is not None
@@ -1036,8 +1085,12 @@ class BackupRuntime:
 
         try:
             selected_allocations = [
-                (ptr, data) for ptr, data in self.allocations.items() if data.tag in selected_tags
+                (ptr, data)
+                for ptr, data in self.allocations.items()
+                if data.tag in selected_tags and not data.resident
             ]
+            if self.config.async_cpu_restore:
+                async_stream = self.backend.restore_stream(1)
             exact_disk_restore = any(
                 data.cpu_backup_buffer is None and self._disk_backup_is_current(data)
                 for _ptr, data in selected_allocations
@@ -1091,18 +1144,36 @@ class BackupRuntime:
                         size_in_bytes = cpu_backup_buffer.size_bytes
                         cpu_ptr = cpu_backup_buffer.address
                         copy_started_at = time.perf_counter()
-                        self.backend.copy(ptr, cpu_ptr, size_in_bytes)
-                        copy_h2d_s += time.perf_counter() - copy_started_at
+                        if async_stream is None:
+                            self.backend.copy(ptr, cpu_ptr, size_in_bytes)
+                            copy_h2d_s += time.perf_counter() - copy_started_at
+                        else:
+                            if async_started_at is None:
+                                async_started_at = time.perf_counter()
+                            async_stream.submit(0, cpu_backup_buffer.view(), ptr)
+                            copy_enqueue_s += time.perf_counter() - copy_started_at
+                            async_restored.append(data)
                         # _require_valid_cpu_backup() and the H2D copy run under
                         # the same lock, so successful restore cannot reach an
                         # invalid state here.
-                        data.cpu_backup_state = CpuBackupState.CACHE_ONLY
+                        if async_stream is None:
+                            data.cpu_backup_state = CpuBackupState.CACHE_ONLY
                         if profile:
                             cpu_restored_bytes_by_tag[data.tag] = (
                                 cpu_restored_bytes_by_tag.get(data.tag, 0) + size_in_bytes
                             )
                     elif disk_backup_ref is not None:
                         disk_plan.append((ptr, data, disk_backup_ref))
+                    data.resident = True
+            if async_stream is not None:
+                wait_started = time.perf_counter()
+                async_stream.synchronize()
+                copy_wait_s = time.perf_counter() - wait_started
+                if async_started_at is not None:
+                    cpu_restore_pipeline_s = time.perf_counter() - async_started_at
+                with self.cpu_backup_lock:
+                    for data in async_restored:
+                        data.cpu_backup_state = CpuBackupState.CACHE_ONLY
             if disk_plan:
                 if (
                     self.disk_backup_store is None
@@ -1161,6 +1232,7 @@ class BackupRuntime:
                 with self.cpu_backup_lock:
                     map_started_at = time.perf_counter()
                     self.backend.map(data.region)
+                    data.resident = True
                     map_elapsed = time.perf_counter() - map_started_at
                     create_map_s += map_elapsed
                     deferred_create_map_s += map_elapsed
@@ -1173,6 +1245,15 @@ class BackupRuntime:
             with self.cpu_backup_lock:
                 self.residency_state = ResidencyState.RECOVERY_REQUIRED
             raise
+        finally:
+            if async_stream is not None:
+                try:
+                    # Fence even an uncertain enqueue before exposing buffers to
+                    # reclaim. On failure keep RESTORING leases and fail closed.
+                    async_stream.close()
+                except BaseException:
+                    self.residency_state = ResidencyState.RECOVERY_REQUIRED
+                    raise
         with self.cpu_backup_lock:
             # Required backups restored above are now cache-only and may satisfy
             # an obligation deferred while wake held them non-evictable.
@@ -1181,6 +1262,7 @@ class BackupRuntime:
             self.sleeping_exact_restore_tags.difference_update(selected_tags)
             if not self.sleeping_tags:
                 self.residency_state = ResidencyState.AWAKE
+                self.partial_sleep = False
             self._report_cpu_backup_usage_locked()
         self.cpu_backup_coordinator.flush()
         self._release_reclaimable_cpu_backups()
@@ -1240,7 +1322,11 @@ class BackupRuntime:
                 restore_source_by_tag=restore_source_by_tag,
                 remapped_without_backup_bytes_by_tag=(remapped_without_backup_bytes_by_tag),
                 create_map_s=create_map_s,
-                copy_h2d_s=copy_h2d_s,
+                copy_h2d_s=None if self.config.async_cpu_restore else copy_h2d_s,
+                async_cpu_restore=self.config.async_cpu_restore,
+                cpu_restore_pipeline_s=cpu_restore_pipeline_s,
+                cpu_copy_enqueue_s=copy_enqueue_s,
+                cpu_copy_wait_s=copy_wait_s,
                 cpu_backup_release_count=(self.cpu_backup_release_count),
                 cpu_backup_release_bytes=(self.cpu_backup_release_bytes),
                 cpu_backup_host_cache_flush_count=(self.cpu_backup_host_cache_flush_count),

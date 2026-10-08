@@ -174,3 +174,47 @@ interfaces and collective preparation preserve a path to other engines and multi
 they do not establish validation of those configurations. The runtime uses PyTorch's
 private host-cache flush API, so physical reclamation remains version-sensitive and is
 reported separately from logical byte accounting.
+
+## Optional GPU switching optimizations
+
+All three features default to disabled. They preserve the fixed-weight, process-local
+ownership boundary. The current partial-switch controller supports exactly two single-GPU,
+single-worker vLLM backends, both configured with L1 and full wake (`wake_tags: null`).
+
+- `VLLM_SWITCH_WEIGHT_SLAB_BYTES=536870912` groups large weight-pool allocation requests
+  into best-fit 512 MiB VMM slabs. Valid values are zero or 2 MiB multiples up to 1 GiB.
+  The vLLM `cumem_allocator` C++ extension must be rebuilt. Slab slices retain their original
+  addresses, and the worker registers/maps/snapshots each complete slab as one region.
+  Slabs never span memory-pool contexts/tags. Small PyTorch requests (at most 20 MiB) stay
+  separate to avoid mixing mutable model buffers into large immutable-weight regions.
+  Space left in slabs is real GPU/backup storage and is reported in byte accounting.
+  Cached empty slices cannot release a slab while siblings are live.
+- `VLLM_SWITCH_ASYNC_RESTORE=1` submits pinned-CPU restores on a dedicated CUDA stream.
+  All source buffers remain in `RESTORING_H2D` until the stream is fenced. Readiness is
+  published only after copies complete. Failure fences outstanding work and preserves
+  fail-closed recovery. `copy_h2d_s` is null in asynchronous profiles; use the separately
+  reported enqueue, final wait, and pipeline wall times. These overlapping timings must
+  not be summed with mapping time as if they were independent phases.
+- Controller `partial_gpu_eviction: true` with `gpu_memory_margin_bytes` (default 256 MiB)
+  asks the old worker to release only the next worker's missing allocation bytes plus
+  headroom minus observed physical free memory. It always discards KV, then selects whole
+  weight regions. Retained immutable GPU regions need no restore. The old scheduler stays
+  paused even when some weights remain resident. Physical free memory is checked again
+  before wake; an insufficient release fails instead of attempting an unsafe allocation.
+
+Partial sleep uses explicit `/sleep_partial`, `/wake_partial`, and `/gpu_residency`
+capabilities, not a reinterpretation of ordinary `/sleep`. The engine drains scheduling
+and resets prefix-cache references before unmapping KV. Wake restores regions and worker
+KV bookkeeping before unpausing scheduling. Residency observations include schema version,
+capability, PID, GPU UUID, resident/missing bytes, and physical free memory; they contain
+no tensor pointers or backup payloads. The controller rejects unsupported capability,
+multiple workers, GPU mismatch, target process restart, and L2 reconstruction obligations.
+These development endpoints assume one lifecycle owner; bypassing the controller with
+competing lifecycle requests is unsupported. On an uncertain transition, engine restart
+may be required; partial eviction is not an OOM recovery mechanism.
+
+The slab/async features also support ordinary full sleep. Existing full-sleep defaults,
+CPU/disk backup leases, staged wake, and L2 checkpoint reconstruction remain in place.
+Slab size trades fewer driver operations against padding and coarser eviction. Measure
+individual features and their combination for the intended model shapes and memory budget;
+larger slabs do not imply better end-to-end performance.

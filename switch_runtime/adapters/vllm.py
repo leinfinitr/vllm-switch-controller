@@ -24,6 +24,8 @@ def config_from_environment() -> RuntimeConfig:
 
     profile = os.environ.get("VLLM_SLEEP_PROFILE_PATH")
     return RuntimeConfig(
+        async_cpu_restore=boolean("VLLM_SWITCH_ASYNC_RESTORE", "0"),
+        weight_slab_bytes=int(os.environ.get("VLLM_SWITCH_WEIGHT_SLAB_BYTES", "0")),
         disk_enabled=boolean("VLLM_EXACT_DISK_BACKUP_ENABLED", "0"),
         disk_root=Path(os.environ.get("VLLM_EXACT_DISK_BACKUP_DIR", "~/.cache/vllm/backup")),
         chunk_bytes=int(os.environ.get("VLLM_EXACT_DISK_BACKUP_CHUNK_BYTES", str(16 * 1024**2))),
@@ -70,6 +72,9 @@ class VllmSleepBackend:
 
     def unregister(self, address: int) -> None:
         self.runtime.unregister(address)
+
+    def slab_bytes(self, tag: str) -> int:
+        return self.runtime.config.weight_slab_bytes if tag == "weights" else 0
 
     def sleep(self, offload_tags=None) -> None:
         self.runtime.sleep(
@@ -234,6 +239,39 @@ class VllmProvider:
             return runtime.reclaim(
                 runtime.cpu_backup_pool.reserved_bytes if target is None else target
             )
+        elif event == "residency":
+            import torch
+
+            with runtime.lifecycle_lock, runtime.cpu_backup_lock:
+                if runtime.residency_state == ResidencyState.RECOVERY_REQUIRED:
+                    raise RuntimeError("GPU residency requires recovery")
+                free, total = torch.cuda.mem_get_info()
+                return {
+                    "schema_version": 1,
+                    "capability": "partial-gpu-sleep-v1",
+                    "pid": os.getpid(),
+                    "device_uuid": str(
+                        torch.cuda.get_device_properties(torch.cuda.current_device()).uuid
+                    ),
+                    "world_size": worker.parallel_config.world_size,
+                    "checkpoint_pending": backend.checkpoint_pending,
+                    "state": runtime.residency_state.value,
+                    "partial_sleep": runtime.partial_sleep,
+                    "resident_bytes": sum(
+                        d.region.size_bytes for d in runtime.allocations.values() if d.resident
+                    ),
+                    "missing_bytes": sum(
+                        d.region.size_bytes for d in runtime.allocations.values() if not d.resident
+                    ),
+                    "allocation_count": len(runtime.allocations),
+                    "free_device_bytes": free,
+                    "total_device_bytes": total,
+                }
+        elif event == "partial_sleep":
+            if worker.parallel_config.world_size != 1 or backend.checkpoint_pending:
+                raise ValueError("partial GPU sleep requires single-worker L1 inference")
+            runtime.sleep("weights", release_bytes=kwargs["release_bytes"])
+            return self.worker_event(worker, "residency")
         elif event == "stats":
             try:
                 package_version = version("vllm-switch-controller")
@@ -257,6 +295,8 @@ class VllmProvider:
                         "direct_io": runtime.config.direct_io,
                         "chunk_bytes": runtime.config.chunk_bytes,
                         "coordinator_mode": runtime.config.coordinator_mode,
+                        "async_cpu_restore": runtime.config.async_cpu_restore,
+                        "weight_slab_bytes": runtime.config.weight_slab_bytes,
                     },
                 },
                 **runtime.get_cpu_backup_pool_stats(),

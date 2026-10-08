@@ -33,6 +33,8 @@ class RequestMetrics:
     hint_source: str | None = None
     hint_status: str | None = None
     hint_reason: str | None = None
+    gpu_release_target_bytes: int | None = None
+    gpu_restore_bytes: int | None = None
 
     @classmethod
     def new(cls, model: str, path: str, request_id: str | None = None) -> "RequestMetrics":
